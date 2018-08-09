@@ -14,8 +14,8 @@ import (
 	// 3d Party
 	"context"
 	// This Service
-	pb "github.com/tuneinc/truss/cmd/_integration-tests/transport/proto"
-	httpclient "github.com/tuneinc/truss/cmd/_integration-tests/transport/transportpermutations-service/svc/client/http"
+	pb "github.com/frankee/truss/cmd/_integration-tests/transport/proto"
+	httpclient "github.com/frankee/truss/cmd/_integration-tests/transport/transportpermutations-service/svc/client/http"
 
 	"github.com/pkg/errors"
 )

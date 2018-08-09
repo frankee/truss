@@ -4,8 +4,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tuneinc/truss/gengokit"
-	"github.com/tuneinc/truss/gengokit/handlers/templates"
+	"github.com/frankee/truss/gengokit"
+	"github.com/frankee/truss/gengokit/handlers/templates"
 )
 
 const HookPath = "handlers/hooks.gotemplate"

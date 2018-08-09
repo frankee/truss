@@ -1,4 +1,4 @@
-# Truss [![Build Status](https://travis-ci.org/tuneinc/truss.svg?branch=master)](https://travis-ci.org/tuneinc/truss)
+# Truss [![Build Status](https://travis-ci.org/frankee/truss.svg?branch=master)](https://travis-ci.org/frankee/truss)
 
 Truss handles the painful parts of services, freeing you to focus on the
 business logic.
@@ -19,15 +19,15 @@ Otherwise [install from source.](https://github.com/google/protobuf)
 1. Install Truss with
 
 	```
-	go get -u -d github.com/tuneinc/truss
-	cd $GOPATH/src/github.com/tuneinc/truss
+	go get -u -d github.com/frankee/truss
+	cd $GOPATH/src/github.com/frankee/truss
 	make dependencies
 	make
 	```
 	On Windows, do the following instead:
 	```
-	go get -u -d github.com/tuneinc/truss
-	cd %GOPATH%/src/github.com/tuneinc/truss
+	go get -u -d github.com/frankee/truss
+	cd %GOPATH%/src/github.com/frankee/truss
 	wininstall.bat
 	```
 
