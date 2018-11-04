@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/frankee/truss/gengokit"
 	templateFileAssets "github.com/frankee/truss/gengokit/template"

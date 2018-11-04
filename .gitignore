@@ -11,4 +11,4 @@ _example/*
 
 # Prevents accidentally including a problematic folder within the `vendor/`
 # folder.
-vendor/github.com/Sirupsen/logrus/examples/
+vendor/github.com/sirupsen/logrus/examples/

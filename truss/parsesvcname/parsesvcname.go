@@ -15,7 +15,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// FromPaths accepts the paths of protobuf definition files and returns the
+// FromPaths accepts the paths of a definition files and returns the
 // name of the service in that protobuf definition file.
 func FromPaths(gopath []string, protoDefPaths []string) (string, error) {
 	td, err := ioutil.TempDir("", "parsesvcname")

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
 
 	gogen "github.com/golang/protobuf/protoc-gen-go/generator"

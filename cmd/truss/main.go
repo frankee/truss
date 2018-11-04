@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
 	flag "github.com/spf13/pflag"
 
@@ -27,6 +27,7 @@ import (
 
 var (
 	svcPackageFlag = flag.String("svcout", "", "Go package path where the generated Go service will be written. Trailing slash will create a NAME-service directory")
+	includesFlag   = flag.StringArray("include", []string{}, "The proto files include paths")
 	verboseFlag    = flag.BoolP("verbose", "v", false, "Verbose output")
 	helpFlag       = flag.BoolP("help", "h", false, "Print usage")
 	getStartedFlag = flag.BoolP("getstarted", "", false, "Output a 'getstarted.proto' protobuf file in ./")
@@ -46,13 +47,13 @@ var (
 func init() {
 	// If Version or VersionDate are not set, truss was not built with make
 	if Version == "" || VersionDate == "" {
-		rebuild := promptNoMake()
-		if !rebuild {
-			os.Exit(1)
-		}
-		err := makeAndRunTruss(os.Args)
-		exitIfError(errors.Wrap(err, "please install truss with make manually"))
-		os.Exit(0)
+		//rebuild := promptNoMake()
+		//if !rebuild {
+		//	os.Exit(1)
+		//}
+		//err := makeAndRunTruss(os.Args)
+		//exitIfError(errors.Wrap(err, "please install truss with make manually"))
+		//os.Exit(0)
 	}
 
 	var buildinfo string
@@ -131,6 +132,12 @@ func parseInput() (*truss.Config, error) {
 	}
 	log.WithField("GOPATH", cfg.GoPath).Debug()
 
+	// IncludePath
+	if len(*includesFlag) > 0 {
+		cfg.IncludePaths = *includesFlag
+	}
+	log.WithField("IncludePaths", cfg.IncludePaths).Debug()
+
 	// DefPaths
 	var err error
 	rawDefinitionPaths := flag.Args()
@@ -154,7 +161,9 @@ func parseInput() (*truss.Config, error) {
 	log.WithField("PB Package", cfg.PBPackage).Debug()
 	log.WithField("PB Path", cfg.PBPath).Debug()
 
-	if err := execprotoc.GeneratePBDotGo(cfg.DefPaths, cfg.GoPath, cfg.PBPath); err != nil {
+	includePaths := cfg.GoPath
+	includePaths = append(includePaths, cfg.IncludePaths...)
+	if err := execprotoc.GeneratePBDotGo(cfg.DefPaths, includePaths, cfg.PBPath); err != nil {
 		return nil, errors.Wrap(err, "cannot create .pb.go files")
 	}
 
