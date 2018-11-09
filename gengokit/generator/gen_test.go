@@ -79,7 +79,7 @@ func TestApplyTemplateFromPath(t *testing.T) {
 
 	conf := gengokit.Config{
 		GoPackage: "github.com/frankee/truss",
-		PBPackage: "github.com/frankee/truss/gengokit/general-service",
+		PBGoPackage: "github.com/frankee/truss/gengokit/general-service",
 	}
 
 	te, err := gengokit.NewData(sd, conf)
@@ -120,7 +120,7 @@ func stringToTemplateExector(def, importPath string) (*gengokit.Data, error) {
 
 	conf := gengokit.Config{
 		GoPackage: importPath,
-		PBPackage: importPath,
+		PBGoPackage: importPath,
 	}
 
 	te, err := gengokit.NewData(sd, conf)
@@ -214,7 +214,7 @@ func TestAllTemplates(t *testing.T) {
 
 	conf := gengokit.Config{
 		GoPackage: "github.com/frankee/truss/gengokit",
-		PBPackage: "github.com/frankee/truss/gengokit/general-service",
+		PBGoPackage: "github.com/frankee/truss/gengokit/general-service",
 	}
 
 	data1, err := gengokit.NewData(sd1, conf)

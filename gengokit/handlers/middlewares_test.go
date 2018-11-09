@@ -122,7 +122,7 @@ func generalService() (*svcdef.Svcdef, *gengokit.Data, error) {
 	}
 	conf := gengokit.Config{
 		GoPackage: "github.com/frankee/truss/gengokit/general-service",
-		PBPackage: "github.com/frankee/truss/gengokit/general-service",
+		PBGoPackage: "github.com/frankee/truss/gengokit/general-service",
 	}
 
 	data, err := gengokit.NewData(sd, conf)

@@ -10,6 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
+	"github.com/serenize/snaker"
 
 	"github.com/frankee/truss/gengokit"
 	"github.com/frankee/truss/gengokit/handlers"
@@ -30,7 +31,8 @@ func GenerateGokit(sd *svcdef.Svcdef, conf gengokit.Config) (map[string]io.Reade
 	codeGenFiles := make(map[string]io.Reader)
 
 	// Remove the suffix "-service" since it's added back in by templatePathToActual
-	svcname := strings.ToLower(sd.Service.Name)
+	svcname := snaker.CamelToSnake(sd.Service.Name)
+
 	for _, templPath := range templFiles.AssetNames() {
 		// Re-derive the actual path for this file based on the service output
 		// path provided by the truss main.go

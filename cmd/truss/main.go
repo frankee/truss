@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 
 	"github.com/frankee/truss/truss"
@@ -27,6 +27,7 @@ import (
 
 var (
 	svcPackageFlag = flag.String("svcout", "", "Go package path where the generated Go service will be written. Trailing slash will create a NAME-service directory")
+	svcPathFlag = flag.String("svcpath", "", "svc path")
 	includesFlag   = flag.StringArray("include", []string{}, "The proto files include paths")
 	verboseFlag    = flag.BoolP("verbose", "v", false, "Verbose output")
 	helpFlag       = flag.BoolP("help", "h", false, "Print usage")
@@ -34,6 +35,7 @@ var (
 )
 
 var binName = filepath.Base(os.Args[0])
+var workplace = ""
 
 var (
 	// Version is compiled into truss with the flag
@@ -45,6 +47,13 @@ var (
 )
 
 func init() {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	workplace = filepath.Dir(ex)
+	fmt.Println(workplace)
+
 	// If Version or VersionDate are not set, truss was not built with make
 	if Version == "" || VersionDate == "" {
 		//rebuild := promptNoMake()
@@ -106,10 +115,10 @@ func main() {
 		return
 	}
 
-	sd, err := parseServiceDefinition(cfg)
-	exitIfError(errors.Wrap(err, "cannot parse input definition proto files"))
+	//sd, err := parseServiceDefinition(cfg)
+	//exitIfError(errors.Wrap(err, "cannot parse input definition proto files"))
 
-	genFiles, err := generateCode(cfg, sd)
+	genFiles, err := generateCode(cfg, cfg.SvcDef)
 	exitIfError(errors.Wrap(err, "cannot generate service"))
 
 	for path, file := range genFiles {
@@ -138,49 +147,61 @@ func parseInput() (*truss.Config, error) {
 	}
 	log.WithField("IncludePaths", cfg.IncludePaths).Debug()
 
+	if len(*svcPathFlag) > 0 {
+		cfg.SvcPath = *svcPathFlag
+	}
+	log.WithField("SvcPath", cfg.IncludePaths).Debug()
+
 	// DefPaths
 	var err error
-	rawDefinitionPaths := flag.Args()
-	cfg.DefPaths, err = cleanProtofilePath(rawDefinitionPaths)
+	cfg.RawPaths = flag.Args()
+	cfg.DefPaths, err = cleanProtofilePath(cfg.RawPaths, cfg.IncludePaths)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot parse input arguments")
 	}
 	log.WithField("DefPaths", cfg.DefPaths).Debug()
 
-	protoDir := filepath.Dir(cfg.DefPaths[0])
-	p, err := build.Default.ImportDir(protoDir, build.FindOnly)
-	if err != nil {
-		return nil, err
-	}
-	if p.Root == "" {
-		return nil, errors.New("proto files not in GOPATH")
-	}
-
-	cfg.PBPackage = p.ImportPath
-	cfg.PBPath = p.Dir
-	log.WithField("PB Package", cfg.PBPackage).Debug()
-	log.WithField("PB Path", cfg.PBPath).Debug()
+	//protoDir := filepath.Dir(cfg.DefPaths[0])
+	//p, err := build.Default.ImportDir(protoDir, build.FindOnly)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//if p.Root == "" {
+	//	return nil, errors.New("proto files not in GOPATH")
+	//}
 
 	includePaths := cfg.GoPath
 	includePaths = append(includePaths, cfg.IncludePaths...)
-	if err := execprotoc.GeneratePBDotGo(cfg.DefPaths, includePaths, cfg.PBPath); err != nil {
+	if err := execprotoc.GeneratePBDotGo(cfg.RawPaths, includePaths, cfg.PBGoPath); err != nil {
 		return nil, errors.Wrap(err, "cannot create .pb.go files")
 	}
 
 	// Service Path
-	svcName, err := parsesvcname.FromPaths(cfg.GoPath, cfg.DefPaths)
+	sd, metaInfos, err := parsesvcname.FromPaths(cfg.IncludePaths, cfg.RawPaths, cfg.DefPaths)
 	if err != nil {
-		log.Warn("No valid service is defined; exiting now.")
+		log.Warn("No valid service is defined; exiting now.", err.Error())
 		log.Info(".pb.go generation with protoc-gen-go was successful.")
 		return nil, nil
 	}
+	cfg.SvcDef = sd
+	cfg.MetaInfos = metaInfos
 
+	serviceMeta := metaInfos[cfg.RawPaths[0]]
+	cfg.PBGoPackage = serviceMeta.PackagePath
+	cfg.PBGoPath = serviceMeta.PackageName
+	log.WithField("PB Package", cfg.PBGoPackage).Debug()
+	log.WithField("PB Path", cfg.PBGoPath).Debug()
+
+	sd.PbPkgName = filepath.Dir(serviceMeta.FilePath)
+	sd.PbPkgName = strings.Replace(sd.PbPkgName, "/", ".", -1)
+	svcName := sd.Service.Name
 	svcName = strings.ToLower(svcName)
 
 	svcDirName := svcName + "-service"
 	log.WithField("svcDirName", svcDirName).Debug()
 
 	svcPath := filepath.Join(filepath.Dir(cfg.DefPaths[0]), svcDirName)
+	//svcPath := filepath.Join(workplace, svcDirName)
 
 	if *svcPackageFlag != "" {
 		svcOut := *svcPackageFlag
@@ -191,7 +212,7 @@ func parseInput() (*truss.Config, error) {
 		seperator := file == ""
 		log.WithField("seperator", seperator)
 
-		svcPath, err = parseSVCOut(svcOut, cfg.GoPath[0])
+		svcPath, err = parseSVCOut(svcOut, "")
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot parse svcout: %s", svcOut)
 		}
@@ -210,16 +231,16 @@ func parseInput() (*truss.Config, error) {
 		return nil, errors.Wrapf(err, "cannot create svcPath directory: %s", svcPath)
 	}
 
-	p, err = build.Default.ImportDir(svcPath, build.FindOnly)
+	p, err := build.Default.ImportDir(svcPath, build.FindOnly)
 	if err != nil {
 		log.WithError(err).Error()
 		return nil, err
 	}
-	if p.Root == "" {
-		return nil, errors.New("proto files path not in GOPATH")
-	}
+	//if p.Root == "" {
+	//	return nil, errors.New("proto files path not in GOPATH")
+	//}
 
-	cfg.ServicePackage = p.ImportPath
+	cfg.ServicePackage = filepath.Join(cfg.SvcPath, svcName + "-service")
 	cfg.ServicePath = p.Dir
 
 	log.WithField("Service Package", cfg.ServicePackage).Debug()
@@ -240,7 +261,12 @@ func parseSVCOut(svcOut string, GOPATH string) (string, error) {
 	if build.IsLocalImport(svcOut) {
 		return filepath.Abs(svcOut)
 	}
-	return filepath.Join(GOPATH, "src", svcOut), nil
+
+	if len(GOPATH) > 0 {
+		return filepath.Join(GOPATH, "src", svcOut), nil
+	} else {
+		return svcOut, nil
+	}
 }
 
 // parseServiceDefinition returns a svcdef which contains all necessary
@@ -260,7 +286,7 @@ func parseServiceDefinition(cfg *truss.Config) (*svcdef.Svcdef, error) {
 	for _, p := range protoDefPaths {
 		base := filepath.Base(p)
 		barename := strings.TrimSuffix(base, filepath.Ext(p))
-		pbgp := filepath.Join(cfg.PBPath, barename+".pb.go")
+		pbgp := filepath.Join(cfg.PBGoPath, barename+".pb.go")
 		pbgoPaths = append(pbgoPaths, pbgp)
 	}
 	pbgoFiles, err := openFiles(pbgoPaths)
@@ -352,7 +378,7 @@ func rewritePBGoForContext(serviceName string, pbgoPaths []string) error {
 // service
 func generateCode(cfg *truss.Config, sd *svcdef.Svcdef) (map[string]io.Reader, error) {
 	conf := ggkconf.Config{
-		PBPackage:     cfg.PBPackage,
+		PBGoPackage:     cfg.PBGoPackage,
 		GoPackage:     cfg.ServicePackage,
 		PreviousFiles: cfg.PrevGen,
 		Version:       Version,
@@ -400,7 +426,7 @@ func writeGenFile(file io.Reader, path string) error {
 
 // cleanProtofilePath returns the absolute filepath of a group of files
 // of the files, or an error if the files are not in the same directory
-func cleanProtofilePath(rawPaths []string) ([]string, error) {
+func cleanProtofilePath(rawPaths []string, includePaths []string) ([]string, error) {
 	var fullPaths []string
 
 	// Parsed passed file paths
@@ -410,10 +436,23 @@ func cleanProtofilePath(rawPaths []string) ([]string, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot get working directory of truss")
 		}
+
+		if !fileExists(full) {
+			for _, path := range includePaths {
+				fullPath := filepath.Join(path, def)
+				if fileExists(fullPath) {
+					full = fullPath
+					break
+				}
+			}
+		}
 		log.WithField("fullDefPath", full)
 
-		fullPaths = append(fullPaths, full)
+		if !fileExists(full) {
+			return nil, errors.Wrap(err, "file not exist")
+		}
 
+		fullPaths = append(fullPaths, full)
 		if filepath.Dir(fullPaths[0]) != filepath.Dir(full) {
 			return nil, errors.Errorf("passed .proto files in different directories")
 		}

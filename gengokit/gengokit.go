@@ -20,7 +20,7 @@ type Renderable interface {
 
 type Config struct {
 	GoPackage   string
-	PBPackage   string
+	PBGoPackage   string
 	Version     string
 	VersionDate string
 
@@ -57,8 +57,8 @@ type Data struct {
 func NewData(sd *svcdef.Svcdef, conf Config) (*Data, error) {
 	return &Data{
 		ImportPath:   conf.GoPackage,
-		PBImportPath: conf.PBPackage,
-		PackageName:  sd.PkgName,
+		PBImportPath: conf.PBGoPackage,
+		PackageName:  sd.PbPkgName,
 		Service:      sd.Service,
 		ClientArgs:   clientarggen.New(sd.Service),
 		HTTPHelper:   httptransport.NewHelper(sd.Service),

@@ -3,19 +3,101 @@
 package execprotoc
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
+	proto_parser "github.com/emicklei/proto"
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	"github.com/pkg/errors"
 )
 
+func withImport(apply func(p *proto_parser.Import)) proto_parser.Handler {
+	return func(v proto_parser.Visitee) {
+		if s, ok := v.(*proto_parser.Import); ok {
+			apply(s)
+		}
+	}
+}
+
+func withPackage(apply func(p *proto_parser.Package)) proto_parser.Handler {
+	return func(v proto_parser.Visitee) {
+		if s, ok := v.(*proto_parser.Package); ok {
+			apply(s)
+		}
+	}
+}
+
+type ProtoMetaInfo struct {
+	IncludePath string
+	FilePath string
+	FileName string
+
+	// go options in proto file
+	PackagePath string
+	PackageName string
+
+	Imports []string
+}
+
+func GetProtoMetaInfo(protofile string) *ProtoMetaInfo {
+	reader, _ := os.Open(protofile)
+	defer reader.Close()
+
+	parser := proto_parser.NewParser(reader)
+	definition, _ := parser.Parse()
+
+	metaInfo := &ProtoMetaInfo{}
+	proto_parser.Walk(definition, withImport(func(p *proto_parser.Import) {
+		metaInfo.Imports = append(metaInfo.Imports, p.Filename)
+		fmt.Println(p.Filename)
+	}), proto_parser.WithOption(func(option *proto_parser.Option) {
+		if option.Name == "go_package" {
+			packages := strings.Split(option.Constant.Source, ";")
+			if len(packages) == 2 {
+				metaInfo.PackagePath = packages[0]
+				metaInfo.PackageName = packages[1]
+			} else if len(packages) == 1 {
+				metaInfo.PackagePath = packages[0]
+			}
+ 		}
+		fmt.Println(option)
+	}), withPackage(func(p *proto_parser.Package) {
+		metaInfo.PackagePath = p.Name
+	}))
+
+	return metaInfo
+}
+
+func GetProtoImports(protofile string) []string {
+	reader, _ := os.Open(protofile)
+	defer reader.Close()
+
+	parser := proto_parser.NewParser(reader)
+	definition, _ := parser.Parse()
+
+	importFiles := []string{}
+	proto_parser.Walk(definition, withImport(func(p *proto_parser.Import) {
+		importFiles = append(importFiles, p.Filename)
+		fmt.Println(p.Filename)
+	}), proto_parser.WithOption(func(option *proto_parser.Option) {
+		fmt.Println(option)
+	}))
+
+	return importFiles
+}
+
 // GeneratePBDotGo creates .pb.go files from the passed protoPaths and writes
 // them to outDir.
 func GeneratePBDotGo(protoPaths, gopath []string, outDir string) error {
+	if len(outDir) == 0 {
+		outDir = "."
+	}
+
 	genGoCode := "--go_out=" +
 		"plugins=grpc:" +
 		outDir

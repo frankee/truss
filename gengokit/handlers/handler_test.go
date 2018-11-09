@@ -123,7 +123,7 @@ func TestApplyServerTempl(t *testing.T) {
 	`
 	conf := gengokit.Config{
 		GoPackage: "github.com/frankee/truss/gengokit/general-service",
-		PBPackage: "github.com/frankee/truss/gengokit/general-service",
+		PBGoPackage: "github.com/frankee/truss/gengokit/general-service",
 	}
 	sd, err := svcdef.NewFromString(def, gopath)
 	if err != nil {
@@ -443,7 +443,7 @@ func TestUpdateMethods(t *testing.T) {
 
 	conf := gengokit.Config{
 		GoPackage: "github.com/frankee/truss/gengokit",
-		PBPackage: "github.com/frankee/truss/gengokit/general-service",
+		PBGoPackage: "github.com/frankee/truss/gengokit/general-service",
 	}
 
 	te, err := gengokit.NewData(sd, conf)
