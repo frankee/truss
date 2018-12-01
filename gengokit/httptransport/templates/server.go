@@ -9,12 +9,31 @@ var ServerDecodeTemplate = `
 	// body. Primarily useful in a server.
 	func DecodeHTTP{{$binding.Label}}Request(_ context.Context, r *http.Request) (interface{}, error) {
 		var req pb.{{GoName $binding.Parent.RequestType}}
+
+		// to support gzip input
+		var reader io.ReadCloser
+		switch r.Header.Get("Content-Encoding") {
+		case "gzip":
+			reader, err = gzip.NewReader(c.Ctx.Request.Body)
+			defer reader.Close()
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed to read the gzip content")
+			}
+		default:
+			reader = r.Body
+		}
+
 		buf, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot read body of http request")
 		}
 		if len(buf) > 0 {
+			{{- if not $binding.BodyField}}
 			if err = json.Unmarshal(buf, &req); err != nil {
+			{{else}}
+			req.{{$binding.BodyField.Name}} = &{{$binding.BodyField.GoType}}{}
+			if err = json.Unmarshal(buf, req.{{$binding.BodyField.Name}}); err != nil {
+			{{end -}}
 				const size = 8196
 				if len(buf) > size {
 					buf = buf[:size]
@@ -60,6 +79,7 @@ package svc
 import (
 	"bytes"
 	"encoding/json"
+	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"net/http"

@@ -149,6 +149,8 @@ func paramLocation(field *Field, binding *svcparse.HTTPBinding) string {
 				return "body"
 			} else if optField.Value == field.Name {
 				return "body"
+			} else if optField.Value == field.PBFieldName {
+				return "body"
 			}
 		}
 	}

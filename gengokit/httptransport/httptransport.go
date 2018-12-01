@@ -110,6 +110,9 @@ func NewBinding(i int, meth *svcdef.ServiceMethod) *Binding {
 		newField.TypeConversion = createDecodeTypeConversion(newField)
 
 		nBinding.Fields = append(nBinding.Fields, &newField)
+		if newField.Location == "body" {
+			nBinding.BodyField = &newField
+		}
 
 		// Enums are allowed in query/path parameters, skip warning
 		if newField.IsEnum {

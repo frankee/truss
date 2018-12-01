@@ -18,6 +18,7 @@ package svcdef
 
 import (
 	"fmt"
+	"github.com/serenize/snaker"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -66,6 +67,7 @@ type Service struct {
 
 type ServiceMethod struct {
 	Name         string
+	SnakeName 	 string
 	RequestType  *FieldType
 	ResponseType *FieldType
 	// Bindings contains information for mapping http paths and paramters onto
@@ -348,6 +350,7 @@ func NewService(s *ast.TypeSpec, info *DebugInfo) (*Service, error) {
 func NewServiceMethod(m *ast.Field, info *DebugInfo) (*ServiceMethod, error) {
 	rv := &ServiceMethod{
 		Name: m.Names[0].Name,
+		SnakeName: snaker.CamelToSnake(m.Names[0].Name),
 	}
 	ft, ok := m.Type.(*ast.FuncType)
 	if !ok {
@@ -455,7 +458,10 @@ func NewField(f *ast.Field) (*Field, error) {
 				return errors.Wrapf(err, "failed to create map for field %q", rv.Name)
 			}
 			rv.Type.Map = mp
+		case *ast.SelectorExpr:
+			rv.Type.Name += ex.Sel.Name
 		}
+
 		return nil
 	}
 	err := typeFollower(f.Type)

@@ -44,7 +44,7 @@ func New(conn *grpc.ClientConn, options ...ClientOption) (pb.{{.Service.Name}}Se
 					{{ToLower $i.Name}}Endpoint = grpctransport.NewClient(
 						conn,
 						"{{$pkgName}}.{{$te.Service.Name}}",
-						"{{$i.Name}}",
+						"{{$i.SnakeName}}",
 						EncodeGRPC{{$i.Name}}Request,
 						DecodeGRPC{{$i.Name}}Response,
 						pb.{{GoName $i.ResponseType.Name}}{},
