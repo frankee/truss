@@ -23,7 +23,7 @@ var ServerDecodeTemplate = `
 			reader = r.Body
 		}
 
-		buf, err := ioutil.ReadAll(r.Body)
+		buf, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot read body of http request")
 		}
