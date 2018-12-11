@@ -17,7 +17,7 @@ var ServerDecodeTemplate = `
 			reader, err := gzip.NewReader(r.Body)
 			defer reader.Close()
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to read the gzip content")
+				return nil, core.Wrap(err, 400, "failed to read the gzip content")
 			}
 		default:
 			reader = r.Body
@@ -25,14 +25,14 @@ var ServerDecodeTemplate = `
 
 		buf, err := ioutil.ReadAll(reader)
 		if err != nil {
-			return nil, errors.Wrapf(err, "cannot read body of http request")
+			return nil, core.Wrap(err, 400, "cannot read body of http request")
 		}
 		if len(buf) > 0 {
 			{{- if not $binding.BodyField}}
-			if err = json.Unmarshal(buf, &req); err != nil {
+			if err = jsoniter.ConfigDefault.Unmarshal(buf, &req); err != nil {
 			{{else}}
 			req.{{$binding.BodyField.Name}} = &{{$binding.BodyField.GoType}}{}
-			if err = json.Unmarshal(buf, req.{{$binding.BodyField.Name}}); err != nil {
+			if err = jsoniter.ConfigDefault.Unmarshal(buf, req.{{$binding.BodyField.Name}}); err != nil {
 			{{end -}}
 				const size = 8196
 				if len(buf) > size {
@@ -91,6 +91,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
+	"github.com/json-iterator/go"
 	httptransport "github.com/go-kit/kit/transport/http"
 
 	// This service
@@ -193,7 +194,7 @@ func (h httpError) Headers() http.Header {
 // EncodeHTTPGenericResponse is a transport/http.EncodeResponseFunc that encodes
 // the response as JSON to the response writer. Primarily useful in a server.
 func EncodeHTTPGenericResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	encoder := json.NewEncoder(w)
+	encoder := jsoniter.ConfigDefault.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
 	return encoder.Encode(response)
 }

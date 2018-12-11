@@ -269,6 +269,7 @@ func ParseMethod(lex *SvcLexer) (*Method, error) {
 	if val == "stream" {
 		tk, val = lex.GetTokenIgnoreWhitespace()
 	}
+
 	if tk != IDENT {
 		return nil, parserErr{
 			expected: "a string identifier in first argument to method",
@@ -280,7 +281,27 @@ func ParseMethod(lex *SvcLexer) (*Method, error) {
 	toret.RequestType = val
 
 	tk, val = lex.GetTokenIgnoreWhitespace()
-	if tk != CLOSE_PAREN {
+
+	if tk == SYMBOL {
+		for {
+			tk, val = lex.GetTokenIgnoreWhitespace()
+			if tk != IDENT {
+				return nil, parserErr{
+					expected: "a string identifier in first argument to method",
+					line:     lex.GetLineNumber(),
+					val:      val,
+				}
+			}
+			toret.RequestType = val
+
+			tk, val = lex.GetTokenIgnoreWhitespace()
+			if tk == CLOSE_PAREN {
+				break
+			} else if tk == SYMBOL {
+				continue
+			}
+		}
+	} else if tk != CLOSE_PAREN {
 		return nil, parserErr{
 			expected: "')'",
 			line:     lex.GetLineNumber(),
@@ -323,7 +344,26 @@ func ParseMethod(lex *SvcLexer) (*Method, error) {
 	toret.ResponseType = val
 
 	tk, val = lex.GetTokenIgnoreWhitespace()
-	if tk != CLOSE_PAREN {
+	if tk == SYMBOL {
+		for {
+			tk, val = lex.GetTokenIgnoreWhitespace()
+			if tk != IDENT {
+				return nil, parserErr{
+					expected: "a string identifier in first argument to method",
+					line:     lex.GetLineNumber(),
+					val:      val,
+				}
+			}
+			toret.ResponseType = val
+
+			tk, val = lex.GetTokenIgnoreWhitespace()
+			if tk == CLOSE_PAREN {
+				break
+			} else if tk == SYMBOL {
+				continue
+			}
+		}
+	} else if tk != CLOSE_PAREN {
 		return nil, parserErr{
 			expected: "')' after declaration of return type to method",
 			line:     lex.GetLineNumber(),

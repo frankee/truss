@@ -381,11 +381,16 @@ func NewServiceMethod(m *ast.Field, info *DebugInfo) (*ServiceMethod, error) {
 				"is not *ast.StarExpr",
 				info.Path, info.Position(in.Pos()))
 		}
-		ident, ok := star.X.(*ast.Ident)
+		var ident *ast.Ident
+		ident, ok = star.X.(*ast.Ident)
 		if !ok {
-			return nil, NewLocationError("cannot create FieldType, "+
-				"star.Type is not *ast.Ident",
-				info.Path, info.Position(star.Pos()))
+			expr, ok := star.X.(*ast.SelectorExpr)
+			if !ok {
+				return nil, NewLocationError("cannot create FieldType, "+
+					"star.Type is not *ast.Ident",
+					info.Path, info.Position(star.Pos()))
+			}
+			ident = expr.Sel
 		}
 		return &FieldType{
 			Name:     ident.Name,
