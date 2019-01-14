@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+go-bindata -pkg template -prefix NAME-service -o template.go NAME-service/...

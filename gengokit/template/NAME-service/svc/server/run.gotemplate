@@ -12,6 +12,7 @@ import (
 	"net/http/pprof"
 
 	// 3d Party
+	netip "github.com/toolkits/net"
 	"google.golang.org/grpc"
 	"github.com/heptiolabs/healthcheck"
     "github.com/prometheus/client_golang/prometheus/promhttp"
@@ -100,13 +101,15 @@ func Run(cfg wzserver.Config) {
      })
 
     sdClient := sd.New(sd.NewConfig("sd"), logger)
+
     if sdClient != nil {
-        sdClient.Register("http://localhost:"+cfg.GrpcAddr, "{{.PackageName}}.{{.Service.Name}}", []string{})
+        url := "etcd://"+ getHost() + ":" + getGrpcPort(cfg.GrpcAddr)
+        sdClient.Register(url, FullServiceName, []string{})
         defer sdClient.Deregister()
     }
 
     // required service clients ...
-    //xxClient := xx_client.New(wzclient.NewConfig("xx"), sdClient.Instancer("{{.PackageName}}.{{.Service.Name}}"), tracer, logger)
+    //xxClient := xx_client.New(wzclient.NewConfig("xx"), sdClient.Instancer(FullServiceName), tracer, logger)
     //defer xxClient.Close()
 
 	// Mechanical domain.
@@ -161,4 +164,20 @@ func Run(cfg wzserver.Config) {
 	// Run!
 	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", " started.")
 	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", <-errc)
+}
+
+func getHost() string {
+    ips, err := netip.IntranetIP()
+    if err != nil || len(ips) == 0 {
+        panic(err)
+    }
+    return ips[0]
+}
+
+func getGrpcPort(addr string) string {
+    host := strings.Split(addr, ":")
+    if len(host) < 2 {
+        panic("host name is invalid (" + addr + ")")
+    }
+    return host[1]
 }

@@ -35,6 +35,8 @@ type Client struct {
 
 var client pb.{{.Service.Name}}Server
 
+const FullServiceName = "{{.PackageName}}.{{.Service.Name}}"
+
 func Instance() pb.{{.Service.Name}}Server {
     return client
 }
@@ -65,7 +67,7 @@ func New(cfg *client.Config) *Client {
                 factory := client.factory(Make{{$i.Name}}Endpoint, tracer, logger)
                 endpointer := sd.NewEndpointer(instancer, factory, logger)
                 balancer := lb.NewRoundRobin(endpointer)
-                retry := lb.Retry(*retryMax, *retryTimeout, balancer)
+                retry := lb.Retry(cfg.Retry.Max, time.Second*time.Duration(cfg.Retry.Timeout), balancer)
                 client.Endpoints.{{$i.Name}}Endpoint = retry
             }
 			{{end}}
