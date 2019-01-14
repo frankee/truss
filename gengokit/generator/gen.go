@@ -105,6 +105,7 @@ func generateResponseFile(templFP string, data *gengokit.Data, prevFile io.Reade
 func templatePathToActual(templFilePath, svcName string) string {
 	// Switch "NAME" in path with svcName.
 	// i.e. for svcName = addsvc; /NAME-server -> /addsvc-service/addsvc-server
+	svcName = strings.Replace(svcName, "_", "-", -1)
 	actual := strings.Replace(templFilePath, "NAME", svcName, -1)
 
 	actual = strings.TrimSuffix(actual, "template")

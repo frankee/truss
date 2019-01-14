@@ -8,14 +8,24 @@ package main
 import (
 	"flag"
 
+	"git.aimap.io/go/config"
+    "git.aimap.io/go/logs"
+    wzserver "git.aimap.io/go/wayz-kit/server"
+
 	// This Service
 	"{{.ImportPath -}} /svc/server"
-	"{{.ImportPath -}} /svc/server/cli"
 )
 
 func main() {
 	// Update addresses if they have been overwritten by flags
 	flag.Parse()
 
-	server.Run(cli.Config)
+    var conf wzserver.Config
+	err := config.ScanKey("server", &conf)
+	if err != nil {
+	    logs.Warnw("failed to get the server config", "error", err.Error())
+	}
+
+    logs.Info("starting {{.Service.Name}}Server")
+	server.Run(conf)
 }

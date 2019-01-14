@@ -4,6 +4,11 @@ const Middlewares = `
 package handlers
 
 import (
+	"git.aimap.io/go/wayz-kit/metrics"
+	"git.aimap.io/go/wayz-kit/middleware"
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	stdopentracing "github.com/opentracing/opentracing-go"
+
 	"{{.ImportPath -}} /svc"
 	pb "{{.PBImportPath -}}"
 )
@@ -14,7 +19,7 @@ import (
 // endpoints and not others (e.g., endpoints requiring authenticated access).
 // Note that the final middleware wrapped will be the outermost middleware
 // (i.e. applied first)
-func WrapEndpoints(in svc.Endpoints) svc.Endpoints {
+func WrapEndpoints(in svc.Endpoints, options map[string]interface{}) svc.Endpoints {
 
 	// Pass a middleware you want applied to every endpoint.
 	// optionally pass in endpoints by name that you want to be excluded
@@ -30,11 +35,26 @@ func WrapEndpoints(in svc.Endpoints) svc.Endpoints {
 
 	// How to apply a middleware to a single endpoint.
 	// in.ExampleEndpoint = authMiddleware(in.ExampleEndpoint)
+	
+	tracer := options["tracer"].(stdopentracing.Tracer)
+	count := options["count"].(kitprometheus.Counter)
+	latency := options["latency"].(kitprometheus.Histogram)
+
+	{{range $i := .Service.Methods}}
+	{ // {{$i.Name}}
+		if tracer != nil {
+			in.{{$i.Name}}Endpoint = opentracing.TraceServer(tracer, "{{$i.SnakeName}}")(in.{{$i.Name}}Endpoint)
+ 		}
+		if count != nil && latency != nil {
+			in.{{$i.Name}}Endpoint = middleware.Instrumenting(latency.With("method", "{{$i.SnakeName}}"), count.With("method", "{{$i.SnakeName}}"))(in.{{$i.Name}}Endpoint)
+		}
+	}
+	{{- end}}
 
 	return in
 }
 
-func WrapService(in pb.{{.Service.Name}}Server) pb.{{.Service.Name}}Server {
+func WrapService(in pb.{{.Service.Name}}Server, options map[string]interface{}) pb.{{.Service.Name}}Server {
 	return in
 }
 `

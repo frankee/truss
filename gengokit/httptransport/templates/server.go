@@ -92,6 +92,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/json-iterator/go"
+
+	stdopentracing "github.com/opentracing/opentracing-go"
 	httptransport "github.com/go-kit/kit/transport/http"
 
 	// This service
@@ -113,11 +115,12 @@ var (
 
 // MakeHTTPHandler returns a handler that makes a set of endpoints available
 // on predefined paths.
-func MakeHTTPHandler(endpoints Endpoints) http.Handler {
+func MakeHTTPHandler(endpoints Endpoints, tracer stdopentracing.Tracer, logger log.Logger) http.Handler {
 	{{- if .HTTPHelper.Methods}}
 		serverOptions := []httptransport.ServerOption{
 			httptransport.ServerBefore(headersToContext),
 			httptransport.ServerErrorEncoder(errorEncoder),
+			httptransport.ServerErrorLogger(logger),
 			httptransport.ServerAfter(httptransport.SetContentType(contentType)),
 		}
 	{{- end }}
@@ -129,7 +132,7 @@ func MakeHTTPHandler(endpoints Endpoints) http.Handler {
 				endpoints.{{$method.Name}}Endpoint,
 				DecodeHTTP{{$binding.Label}}Request,
 				EncodeHTTPGenericResponse,
-				serverOptions...,
+				append(serverOptions, httptransport.ServerBefore(opentracing.HTTPToContext(tracer, "{{$method.SnakeName}}", logger)))...,
 			))
 		{{- end}}
 	{{- end}}

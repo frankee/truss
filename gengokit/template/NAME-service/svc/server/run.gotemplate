@@ -13,6 +13,18 @@ import (
 
 	// 3d Party
 	"google.golang.org/grpc"
+	"github.com/heptiolabs/healthcheck"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
+
+    "git.aimap.io/go/logs"
+    "git.aimap.io/go/wayz-kit/sd"
+    "git.aimap.io/go/wayz-kit/tracing"
+	"git.aimap.io/go/wayz-kit/log/zap"
+	wzclient "git.aimap.io/go/wayz-kit/client"
+    wzserver "git.aimap.io/go/wayz-kit/server"
+
+    kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+    stdprometheus "github.com/prometheus/client_golang/prometheus"
 
 	// This Service
 	pb "{{.PBImportPath -}}"
@@ -20,45 +32,82 @@ import (
 	"{{.ImportPath -}} /handlers"
 )
 
-// Config contains the required fields for running a server
-type Config struct {
-	HTTPAddr string
-	DebugAddr string
-	GRPCAddr string
-}
+var _ = wzclient.Config
 
-func NewEndpoints() svc.Endpoints {
+func NewEndpoints(options map[string]interface{}) svc.Endpoints {
 	// Business domain.
 	var service pb.{{.Service.Name}}Server
 	{
 		service = handlers.NewService()
 		// Wrap Service with middlewares. See handlers/middlewares.go
-		service = handlers.WrapService(service)
+		service = handlers.WrapService(service, options)
 	}
 
 	// Endpoint domain.
 	var (
 	{{range $i := .Service.Methods -}}
-		{{ToLower $i.Name}}Endpoint = svc.Make{{$i.Name}}Endpoint(service)
+		{{ToLowCamelName $i.Name}}Endpoint = svc.Make{{$i.Name}}Endpoint(service)
 	{{end}}
 	)
 
 	endpoints := svc.Endpoints{
 	{{range $i := .Service.Methods -}}
-		{{$i.Name}}Endpoint:    {{ToLower $i.Name}}Endpoint,
+		{{$i.Name}}Endpoint:    {{ToLowCamelName $i.Name}}Endpoint,
 	{{end}}
 	}
 
 	// Wrap selected Endpoints with middlewares. See handlers/middlewares.go
-	endpoints = handlers.WrapEndpoints(endpoints)
+	endpoints = handlers.WrapEndpoints(endpoints, options)
 
 	return endpoints
 }
 
 // Run starts a new http server, gRPC server, and a debug server with the
 // passed config and logger
-func Run(cfg Config) {
-	endpoints := NewEndpoints()
+func Run(cfg wzserver.Config) {
+    const FullServiceName = "{{.PackageName}}.{{.Service.Name}}"
+
+    // tracing init
+	tracer, c := tracing.New(FullServiceName)
+    if c != nil {
+        defer c.Close()
+    }
+
+    // Create a single logger, which we'll use and give to other components.
+    logger := zap.Logger()
+
+    cfg := metrics.NewConfig("metrics")
+    fieldKeys := []string{"method", "error"}
+    count := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+        Namespace: cfg.Department,
+        Subsystem: cfg.Project,
+        Name:      "request_count",
+        Help:      "Number of requests received.",
+    }, fieldKeys)
+
+    latency := kitprometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+        Namespace: cfg.Department,
+        Subsystem: cfg.Project,
+        Name:      "request_latency_seconds",
+        Help:      "Total duration of requests in seconds.",
+    }, fieldKeys)
+
+    endpoints := NewEndpoints(map[string]interface{}{
+         "tracer": tracer,
+         "logger": logger,
+         "count": count,
+         "latency": latency,
+     })
+
+    sdClient := sd.New(sd.NewConfig("sd"), logger)
+    if sdClient != nil {
+        sdClient.Register("http://localhost:"+cfg.GrpcAddr, "{{.PackageName}}.{{.Service.Name}}", []string{})
+        defer sdClient.Deregister()
+    }
+
+    // required service clients ...
+    //xxClient := xx_client.New(wzclient.NewConfig("xx"), sdClient.Instancer("{{.PackageName}}.{{.Service.Name}}"), tracer, logger)
+    //defer xxClient.Close()
 
 	// Mechanical domain.
 	errc := make(chan error)
@@ -68,7 +117,7 @@ func Run(cfg Config) {
 
 	// Debug listener.
 	go func() {
-		log.Println("transport", "debug", "addr", cfg.DebugAddr)
+	    logs.Infow("begin debug server", "transport", "debug", "address", cfg.DebugAddr)
 
 		m := http.NewServeMux()
 		m.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
@@ -77,19 +126,25 @@ func Run(cfg Config) {
 		m.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
 		m.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 
+        m.Handle("/metrics", promhttp.Handler())
+
+        health := healthcheck.NewHandler()
+        health.AddLivenessCheck("http service", healthcheck.TCPDialCheck(cfg.HttpAddr, time.Second))
+        m.Handle("/health", http.HandlerFunc(health.LiveEndpoint))
+
 		errc <- http.ListenAndServe(cfg.DebugAddr, m)
 	}()
 
 	// HTTP transport.
 	go func() {
-		log.Println("transport", "HTTP", "addr", cfg.HTTPAddr)
+	    logs.Infow("begin http server", "transport", "HTTP", "address", cfg.HTTPAddr)
 		h := svc.MakeHTTPHandler(endpoints)
 		errc <- http.ListenAndServe(cfg.HTTPAddr, h)
 	}()
 
 	// gRPC transport.
 	go func() {
-		log.Println("transport", "gRPC","addr", cfg.GRPCAddr)
+	    logs.Infow("begin grpc server", "transport", "gRPC", "address", cfg.GRPCAddr)
 		ln, err := net.Listen("tcp", cfg.GRPCAddr)
 		if err != nil {
 			errc <- err
@@ -104,6 +159,6 @@ func Run(cfg Config) {
 	}()
 
 	// Run!
-	log.Println("exit", <-errc)
+	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", " started.")
+	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", <-errc)
 }
-

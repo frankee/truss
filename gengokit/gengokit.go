@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 	"text/template"
+	"unicode"
 
 	generatego "github.com/golang/protobuf/protoc-gen-go/generator"
 	"github.com/pkg/errors"
@@ -27,11 +28,26 @@ type Config struct {
 	PreviousFiles map[string]io.Reader
 }
 
+// lowCamelName returns a CamelCased string, but with the first letter
+// lowercased. "example_name" becomes "exampleName".
+func ToLowCamelName(s string) string {
+	s = generatego.CamelCase(s)
+	new := []rune(s)
+	if len(new) < 1 {
+		return s
+	}
+	rv := []rune{}
+	rv = append(rv, unicode.ToLower(new[0]))
+	rv = append(rv, new[1:]...)
+	return string(rv)
+}
+
 // FuncMap contains a series of utility functions to be passed into
 // templates and used within those templates.
 var FuncMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 	"GoName":  generatego.CamelCase,
+	"ToLowCamelName": ToLowCamelName,
 }
 
 // Data is passed to templates as the executing struct; its fields

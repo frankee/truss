@@ -4,6 +4,7 @@ package httptransport
 // svcdef.ServiceMethod that's useful for templating http transport.
 type Method struct {
 	Name string
+	SnakeName string
 	// RequestType is the name of type of the Request, e.g. *EchoRequest
 	RequestType  string
 	ResponseType string

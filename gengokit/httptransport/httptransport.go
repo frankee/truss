@@ -11,9 +11,9 @@ import (
 	"text/template"
 	"unicode"
 
-	log "github.com/sirupsen/logrus"
 	gogen "github.com/golang/protobuf/protoc-gen-go/generator"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/frankee/truss/gengokit/httptransport/templates"
 	"github.com/frankee/truss/svcdef"
@@ -23,9 +23,9 @@ import (
 // information necessary to correctly template the HTTP transport functionality
 // of a service. Helper must be built from a Svcdef.
 type Helper struct {
-	Methods           []*Method
-	ServerTemplate    func(interface{}) (string, error)
-	ClientTemplate    func(interface{}) (string, error)
+	Methods        []*Method
+	ServerTemplate func(interface{}) (string, error)
+	ClientTemplate func(interface{}) (string, error)
 }
 
 // NewHelper builds a helper struct from a service declaration. The other
@@ -35,8 +35,8 @@ func NewHelper(svc *svcdef.Service) *Helper {
 	// The HTTPAssistFuncs global is a group of function literals defined
 	// within templates.go
 	rv := Helper{
-		ServerTemplate:    GenServerTemplate,
-		ClientTemplate:    GenClientTemplate,
+		ServerTemplate: GenServerTemplate,
+		ClientTemplate: GenClientTemplate,
 	}
 	for _, meth := range svc.Methods {
 		if len(meth.Bindings) > 0 {
@@ -51,6 +51,7 @@ func NewHelper(svc *svcdef.Service) *Helper {
 func NewMethod(meth *svcdef.ServiceMethod) *Method {
 	nMeth := Method{
 		Name:         meth.Name,
+		SnakeName:    meth.SnakeName,
 		RequestType:  meth.RequestType.Name,
 		ResponseType: meth.ResponseType.Name,
 	}
@@ -84,7 +85,7 @@ func NewBinding(i int, meth *svcdef.ServiceMethod) *Binding {
 			Name:           field.Name,
 			QueryParamName: field.PBFieldName,
 			CamelName:      gogen.CamelCase(field.Name),
-			LowCamelName:   LowCamelName(field.Name),
+			LowCamelName:   ToLowCamelName(field.Name),
 			Location:       param.Location,
 			Repeated:       field.Type.ArrayType,
 			GoType:         field.Type.Name,
@@ -397,7 +398,7 @@ func EnglishNumber(i int) string {
 
 // LowCamelName returns a CamelCased string, but with the first letter
 // lowercased. "example_name" becomes "exampleName".
-func LowCamelName(s string) string {
+func ToLowCamelName(s string) string {
 	s = gogen.CamelCase(s)
 	new := []rune(s)
 	if len(new) < 1 {
@@ -417,6 +418,7 @@ var TemplateFuncs = template.FuncMap{
 	"Title":    strings.Title,
 	"GoName":   gogen.CamelCase,
 	"Contains": strings.Contains,
+	"ToLowCamelName": ToLowCamelName,
 }
 
 // ApplyTemplate applies a template with a given name, executor context, and
