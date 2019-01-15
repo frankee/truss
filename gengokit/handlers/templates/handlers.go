@@ -22,7 +22,7 @@ package handlers
 
 import (
 	"context"
-
+	"errors"
 	pb "{{.PBImportPath -}}"
 )
 

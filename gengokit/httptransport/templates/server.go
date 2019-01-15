@@ -29,10 +29,10 @@ var ServerDecodeTemplate = `
 		}
 		if len(buf) > 0 {
 			{{- if not $binding.BodyField}}
-			if err = jsoniter.ConfigDefault.Unmarshal(buf, &req); err != nil {
+			if err = jsoniter.ConfigFastest.Unmarshal(buf, &req); err != nil {
 			{{else}}
 			req.{{$binding.BodyField.Name}} = &{{$binding.BodyField.GoType}}{}
-			if err = jsoniter.ConfigDefault.Unmarshal(buf, req.{{$binding.BodyField.Name}}); err != nil {
+			if err = jsoniter.ConfigFastest.Unmarshal(buf, req.{{$binding.BodyField.Name}}); err != nil {
 			{{end -}}
 				const size = 8196
 				if len(buf) > size {
@@ -197,7 +197,7 @@ func (h httpError) Headers() http.Header {
 // EncodeHTTPGenericResponse is a transport/http.EncodeResponseFunc that encodes
 // the response as JSON to the response writer. Primarily useful in a server.
 func EncodeHTTPGenericResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	encoder := jsoniter.ConfigDefault.NewEncoder(w)
+	encoder := jsoniter.ConfigFastest.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
 	return encoder.Encode(response)
 }

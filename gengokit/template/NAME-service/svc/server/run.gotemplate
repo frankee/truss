@@ -6,23 +6,25 @@
 package server
 
 import (
-	"log"
 	"net"
-	"net/http"
-	"net/http/pprof"
+    "net/http"
+    "net/http/pprof"
+    "strings"
+    "time"
 
-	// 3d Party
-	netip "github.com/toolkits/net"
-	"google.golang.org/grpc"
-	"github.com/heptiolabs/healthcheck"
+    // 3d Party
+    "github.com/heptiolabs/healthcheck"
     "github.com/prometheus/client_golang/prometheus/promhttp"
+    netip "github.com/toolkits/net"
+    "google.golang.org/grpc"
 
     "git.aimap.io/go/logs"
+    wzclient "git.aimap.io/go/wayz-kit/client"
+    "git.aimap.io/go/wayz-kit/log/zap"
+    "git.aimap.io/go/wayz-kit/metrics"
     "git.aimap.io/go/wayz-kit/sd"
-    "git.aimap.io/go/wayz-kit/tracing"
-	"git.aimap.io/go/wayz-kit/log/zap"
-	wzclient "git.aimap.io/go/wayz-kit/client"
     wzserver "git.aimap.io/go/wayz-kit/server"
+    "git.aimap.io/go/wayz-kit/tracing"
 
     kitprometheus "github.com/go-kit/kit/metrics/prometheus"
     stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -33,7 +35,7 @@ import (
 	"{{.ImportPath -}} /handlers"
 )
 
-var _ = wzclient.Config
+var _ wzclient.Config
 
 func NewEndpoints(options map[string]interface{}) svc.Endpoints {
 	// Business domain.
@@ -77,18 +79,18 @@ func Run(cfg wzserver.Config) {
     // Create a single logger, which we'll use and give to other components.
     logger := zap.Logger()
 
-    cfg := metrics.NewConfig("metrics")
+    config := metrics.NewConfig("metrics")
     fieldKeys := []string{"method", "error"}
     count := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-        Namespace: cfg.Department,
-        Subsystem: cfg.Project,
+        Namespace: config.Department,
+        Subsystem: config.Project,
         Name:      "request_count",
         Help:      "Number of requests received.",
     }, fieldKeys)
 
     latency := kitprometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
-        Namespace: cfg.Department,
-        Subsystem: cfg.Project,
+        Namespace: config.Department,
+        Subsystem: config.Project,
         Name:      "request_latency_seconds",
         Help:      "Total duration of requests in seconds.",
     }, fieldKeys)
@@ -140,21 +142,21 @@ func Run(cfg wzserver.Config) {
 
 	// HTTP transport.
 	go func() {
-	    logs.Infow("begin http server", "transport", "HTTP", "address", cfg.HTTPAddr)
-		h := svc.MakeHTTPHandler(endpoints)
-		errc <- http.ListenAndServe(cfg.HTTPAddr, h)
+	    logs.Infow("begin http server", "transport", "HTTP", "address", cfg.HttpAddr)
+		h := svc.MakeHTTPHandler(endpoints, tracer, logger)
+		errc <- http.ListenAndServe(cfg.HttpAddr, h)
 	}()
 
 	// gRPC transport.
 	go func() {
-	    logs.Infow("begin grpc server", "transport", "gRPC", "address", cfg.GRPCAddr)
-		ln, err := net.Listen("tcp", cfg.GRPCAddr)
+	    logs.Infow("begin grpc server", "transport", "gRPC", "address", cfg.GrpcAddr)
+		ln, err := net.Listen("tcp", cfg.GrpcAddr)
 		if err != nil {
 			errc <- err
 			return
 		}
 
-		srv := svc.MakeGRPCServer(endpoints)
+		srv := svc.MakeGRPCServer(endpoints, tracer, logger)
 		s := grpc.NewServer()
 		pb.Register{{.Service.Name}}Server(s, srv)
 

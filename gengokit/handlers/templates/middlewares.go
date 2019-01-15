@@ -4,9 +4,9 @@ const Middlewares = `
 package handlers
 
 import (
-	"git.aimap.io/go/wayz-kit/metrics"
 	"git.aimap.io/go/wayz-kit/middleware"
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/go-kit/kit/tracing/opentracing"
 	stdopentracing "github.com/opentracing/opentracing-go"
 
 	"{{.ImportPath -}} /svc"
@@ -36,9 +36,18 @@ func WrapEndpoints(in svc.Endpoints, options map[string]interface{}) svc.Endpoin
 	// How to apply a middleware to a single endpoint.
 	// in.ExampleEndpoint = authMiddleware(in.ExampleEndpoint)
 	
-	tracer := options["tracer"].(stdopentracing.Tracer)
-	count := options["count"].(kitprometheus.Counter)
-	latency := options["latency"].(kitprometheus.Histogram)
+	var tracer stdopentracing.Tracer
+	if value, ok := options["tracer"]; ok && value != nil{
+		tracer = value.(stdopentracing.Tracer)
+	}
+	var count *kitprometheus.Counter
+	if value, ok := options["count"]; ok && value != nil {
+		count = value.(*kitprometheus.Counter)
+	}
+	var latency *kitprometheus.Histogram
+	if value, ok := options["latency"]; ok && value != nil {
+		latency = value.(*kitprometheus.Histogram)
+	}
 
 	{{range $i := .Service.Methods}}
 	{ // {{$i.Name}}
