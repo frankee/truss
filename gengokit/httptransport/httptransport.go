@@ -5,6 +5,7 @@ package httptransport
 import (
 	"bytes"
 	"fmt"
+	"github.com/serenize/snaker"
 	"go/format"
 	"strconv"
 	"strings"
@@ -419,6 +420,7 @@ var TemplateFuncs = template.FuncMap{
 	"GoName":   gogen.CamelCase,
 	"Contains": strings.Contains,
 	"ToLowCamelName": ToLowCamelName,
+	"ToSnake": snaker.CamelToSnake,
 }
 
 // ApplyTemplate applies a template with a given name, executor context, and

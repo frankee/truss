@@ -4,22 +4,23 @@
 // Version Date: {{.VersionDate}}
 
 // Package grpc provides a gRPC client for the {{.Service.Name}} service.
-package client
+package {{ToSnake .Service.Name}}_client
 
 import (
 	"context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"github.com/pkg/errors"
+    "github.com/pkg/errors"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/metadata"
 
     stdopentracing "github.com/opentracing/opentracing-go"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/tracing/opentracing"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
+    "github.com/go-kit/kit/endpoint"
+    "github.com/go-kit/kit/tracing/opentracing"
+    grpctransport "github.com/go-kit/kit/transport/grpc"
+
+    "github.com/go-kit/kit/log"
 
 	// This Service
-	"{{.ImportPath -}} /svc"
 	pb "{{.PBImportPath -}}"
 )
 
@@ -60,7 +61,7 @@ func NewGrpc(conn *grpc.ClientConn, tracer stdopentracing.Tracer, logger log.Log
 		{{end}}
 	{{end}}
 
-	return svc.Endpoints{
+	return Endpoints{
 	{{range $i := .Service.Methods -}}
 		{{$i.Name}}Endpoint:    {{ToLower $i.Name}}Endpoint,
 	{{end}}

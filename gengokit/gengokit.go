@@ -2,6 +2,7 @@ package gengokit
 
 import (
 	"bytes"
+	"github.com/serenize/snaker"
 	"io"
 	"strings"
 	"text/template"
@@ -48,6 +49,7 @@ var FuncMap = template.FuncMap{
 	"ToLower": strings.ToLower,
 	"GoName":  generatego.CamelCase,
 	"ToLowCamelName": ToLowCamelName,
+	"ToSnake": snaker.CamelToSnake,
 }
 
 // Data is passed to templates as the executing struct; its fields

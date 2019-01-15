@@ -4,22 +4,24 @@
 // Version Date: {{.VersionDate}}
 
 // Package grpc provides a gRPC client for the {{.Service.Name}} service.
-package client
+package {{ToSnake .Service.Name}}_client
 
 import (
-	"context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/metadata"
-	"github.com/pkg/errors"
+    "io"
+    "time"
 
+    "git.aimap.io/go/logs"
+
+    "github.com/go-kit/kit/endpoint"
+    "github.com/go-kit/kit/log"
+    "github.com/go-kit/kit/sd"
+    "github.com/go-kit/kit/sd/lb"
     stdopentracing "github.com/opentracing/opentracing-go"
+    "google.golang.org/grpc"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/tracing/opentracing"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
+    wzclient "git.aimap.io/go/wayz-kit/client"
 
 	// This Service
-	"{{.ImportPath -}} /svc"
 	pb "{{.PBImportPath -}}"
 )
 
@@ -30,7 +32,7 @@ type Conn struct {
 
 type Client struct {
     Endpoints
-    connections map[string]*Connection
+    connections map[string]*Conn
 }
 
 var client pb.{{.Service.Name}}Server
@@ -43,20 +45,7 @@ func Instance() pb.{{.Service.Name}}Server {
 
 // New returns an service backed by a gRPC client connection. It is the
 // responsibility of the caller to dial, and later close, the connection.
-func New(cfg *client.Config) *Client {
-	var cc clientConfig
-
-	for _, f := range options {
-		err := f(&cc)
-		if err != nil {
-			return nil, errors.Wrap(err, "cannot apply option")
-		}
-	}
-
-	clientOptions := []grpctransport.ClientOption{
-		grpctransport.ClientBefore(
-			contextValuesToGRPCMetadata(cc.headers)),
-	}
+func New(cfg *wzclient.Config, instancer sd.Instancer, tracer stdopentracing.Tracer, logger log.Logger) *Client {
 	client := &Client{}
 
 	{{- with $te := .}}
@@ -74,15 +63,11 @@ func New(cfg *client.Config) *Client {
 		{{end}}
 	{{end}}
 
-	return svc.Endpoints{
-	{{range $i := .Service.Methods -}}
-		{{$i.Name}}Endpoint:    {{ToLowCamelName $i.Name}}Endpoint,
-	{{end}}
-	}
+	return client
 }
 
-func (s *Client) Close() error {
-	for key, conn := range s.connections {
+func (c *Client) Close() error {
+	for key, conn := range c.connections {
 		logs.Info("closing ", key)
 		conn.conn.Close()
 	}
@@ -98,7 +83,7 @@ func (c *Client) factory(makeEndpoint func(server pb.{{.Service.Name}}Server) en
 		// this function. Nice!
 
 		var conn *Conn
-		if _, ok := s.connections[instance]; !ok {
+		if _, ok := c.connections[instance]; !ok {
 			transport, err := grpc.Dial(instance, grpc.WithInsecure())
 			if err != nil {
 				return nil, nil, err
@@ -108,11 +93,11 @@ func (c *Client) factory(makeEndpoint func(server pb.{{.Service.Name}}Server) en
                 return nil, nil, err
             }
 			conn = &Conn{conn:transport, service:grpc}
-			s.connections[instance] = conn
+			c.connections[instance] = conn
 		} else {
-			connection = s.Connections[instance]
+			conn = c.connections[instance]
 		}
 
-		return makeEndpoint(connection.service), conn.conn, nil
+		return makeEndpoint(conn.service), conn.conn, nil
 	}
 }

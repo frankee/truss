@@ -3,7 +3,7 @@
 // Version: {{.Version}}
 // Version Date: {{.VersionDate}}
 
-package client
+package {{ToSnake .Service.Name}}_client
 
 // This file contains methods to make individual endpoints from services,
 // request and response types to serve those endpoints, as well as encoders and
@@ -11,9 +11,7 @@ package client
 // formats.
 
 import (
-	"fmt"
 	"context"
-
 	"github.com/go-kit/kit/endpoint"
 
 	pb "{{.PBImportPath -}}"
