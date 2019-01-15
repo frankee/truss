@@ -92,6 +92,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/json-iterator/go"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/tracing/opentracing"
 
 	stdopentracing "github.com/opentracing/opentracing-go"
 	httptransport "github.com/go-kit/kit/transport/http"

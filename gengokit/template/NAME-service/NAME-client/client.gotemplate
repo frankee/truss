@@ -9,6 +9,7 @@ package {{ToSnake .Service.Name}}_client
 import (
     "io"
     "time"
+    "sync"
 
     "git.aimap.io/go/logs"
 
@@ -33,20 +34,23 @@ type Conn struct {
 type Client struct {
     Endpoints
     connections map[string]*Conn
+
+    mux  sync.RWMutex
 }
 
-var client pb.{{.Service.Name}}Server
+var service pb.{{.Service.Name}}Server
 
 const FullServiceName = "{{.PackageName}}.{{.Service.Name}}"
 
 func Instance() pb.{{.Service.Name}}Server {
-    return client
+    return service
 }
 
 // New returns an service backed by a gRPC client connection. It is the
 // responsibility of the caller to dial, and later close, the connection.
 func New(cfg *wzclient.Config, instancer sd.Instancer, tracer stdopentracing.Tracer, logger log.Logger) *Client {
 	client := &Client{}
+	client.connections = make(map[string]*Conn)
 
 	{{- with $te := .}}
 		{{- with $pkgName := $te.PackageName}}
@@ -63,6 +67,7 @@ func New(cfg *wzclient.Config, instancer sd.Instancer, tracer stdopentracing.Tra
 		{{end}}
 	{{end}}
 
+    service = client.Endpoints
 	return client
 }
 
@@ -81,6 +86,9 @@ func (c *Client) factory(makeEndpoint func(server pb.{{.Service.Name}}Server) en
 		// the connection to addsvc. We've chosen gRPC arbitrarily. Note that
 		// the transport is an implementation detail: it doesn't leak out of
 		// this function. Nice!
+        c.mux.Lock()
+        defer c.mux.Unlock()
+        logs.Info("sd factory received instance: ", instance)
 
 		var conn *Conn
 		if _, ok := c.connections[instance]; !ok {
