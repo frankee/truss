@@ -78,7 +78,7 @@ func Run(cfg wzserver.Config) {
     logger := zap.Logger()
 
     config := metrics.NewConfig("metrics")
-    fieldKeys := []string{"method", "error"}
+    fieldKeys := []string{"method", "access_key", "error"}
     count := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
         Namespace: config.Department,
         Subsystem: config.Project,

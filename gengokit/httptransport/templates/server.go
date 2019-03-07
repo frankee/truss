@@ -216,6 +216,12 @@ func headersToContext(ctx context.Context, r *http.Request) context.Context {
 		ctx = context.WithValue(ctx, strings.ToLower(k), r.Header.Get(k))
 	}
 
+	// add the access key to context
+	accessKey := r.URL.Query().Get("access_key")
+	if len(accessKey) > 0{
+		ctx = context.WithValue(ctx, "access_key", accessKey)
+	}
+
 	// Tune specific change.
 	// also add the request url
 	ctx = context.WithValue(ctx, "request-url", r.URL.Path)

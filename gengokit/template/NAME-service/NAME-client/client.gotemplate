@@ -71,8 +71,8 @@ func New(cfg *wzclient.Config, instancer sd.Instancer, tracer stdopentracing.Tra
 	return client
 }
 
-func (c *Client) Close() error {
-	for key, conn := range c.connections {
+func (client *Client) Close() error {
+	for key, conn := range client.connections {
 		logs.Info("closing ", key)
 		conn.conn.Close()
 	}
@@ -80,18 +80,18 @@ func (c *Client) Close() error {
 	return nil
 }
 
-func (c *Client) factory(makeEndpoint func(server pb.{{.Service.Name}}Server) endpoint.Endpoint, tracer stdopentracing.Tracer, logger log.Logger) sd.Factory {
+func (client *Client) factory(makeEndpoint func(server pb.{{.Service.Name}}Server) endpoint.Endpoint, tracer stdopentracing.Tracer, logger log.Logger) sd.Factory {
 	return func(instance string) (endpoint.Endpoint, io.Closer, error) {
 		// We could just as easily use the HTTP or Thrift client package to make
 		// the connection to addsvc. We've chosen gRPC arbitrarily. Note that
 		// the transport is an implementation detail: it doesn't leak out of
 		// this function. Nice!
-        c.mux.Lock()
-        defer c.mux.Unlock()
+        client.mux.Lock()
+        defer client.mux.Unlock()
         logs.Info("sd factory received instance: ", instance)
 
 		var conn *Conn
-		if _, ok := c.connections[instance]; !ok {
+		if _, ok := client.connections[instance]; !ok {
 			transport, err := grpc.Dial(instance, grpc.WithInsecure())
 			if err != nil {
 				return nil, nil, err
@@ -101,11 +101,37 @@ func (c *Client) factory(makeEndpoint func(server pb.{{.Service.Name}}Server) en
                 return nil, nil, err
             }
 			conn = &Conn{conn:transport, service:grpc}
-			c.connections[instance] = conn
+			client.connections[instance] = conn
 		} else {
-			conn = c.connections[instance]
+			conn = client.connections[instance]
 		}
 
-		return makeEndpoint(conn.service), conn.conn, nil
+		return makeEndpoint(conn.service), client.closer(instance), nil
 	}
+}
+
+type closer struct {
+	close func() error
+}
+
+func (client *closer) Close() error {
+	return client.close()
+}
+
+func (client *Client) closer(instance string) io.Closer {
+	c := new(closer)
+	c.close = func() error {
+		logs.Info("delete instance : ", instance)
+		client.mux.Lock()
+		defer client.mux.Unlock()
+
+		var err error
+		if _, ok := client.connections[instance]; ok {
+			err = client.connections[instance].conn.Close()
+			delete(client.connections, instance)
+		}
+		return err
+	}
+
+	return c
 }
