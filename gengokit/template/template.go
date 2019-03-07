@@ -97,7 +97,7 @@ func nameClientClientGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "NAME-client/client.gotemplate", size: 3742, mode: os.FileMode(420), modTime: time.Unix(1547635364, 0)}
+	info := bindataFileInfo{name: "NAME-client/client.gotemplate", size: 3742, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -117,7 +117,7 @@ func nameClientEndpointsGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "NAME-client/endpoints.gotemplate", size: 2242, mode: os.FileMode(420), modTime: time.Unix(1547516856, 0)}
+	info := bindataFileInfo{name: "NAME-client/endpoints.gotemplate", size: 2242, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -137,7 +137,7 @@ func nameClientGrpcGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "NAME-client/grpc.gotemplate", size: 3592, mode: os.FileMode(420), modTime: time.Unix(1547516856, 0)}
+	info := bindataFileInfo{name: "NAME-client/grpc.gotemplate", size: 3592, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -157,7 +157,7 @@ func cmdNameMainGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "cmd/NAME/main.gotemplate", size: 4178, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "cmd/NAME/main.gotemplate", size: 4178, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -177,7 +177,7 @@ func cmdNameServerMainGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "cmd/NAME-server/main.gotemplate", size: 654, mode: os.FileMode(420), modTime: time.Unix(1547455174, 0)}
+	info := bindataFileInfo{name: "cmd/NAME-server/main.gotemplate", size: 654, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -197,7 +197,7 @@ func handlersHandlersGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "handlers/handlers.gotemplate", size: 62, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "handlers/handlers.gotemplate", size: 62, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -217,7 +217,7 @@ func handlersHooksGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "handlers/hooks.gotemplate", size: 62, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "handlers/hooks.gotemplate", size: 62, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -237,7 +237,7 @@ func handlersMiddlewaresGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "handlers/middlewares.gotemplate", size: 75, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "handlers/middlewares.gotemplate", size: 75, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -257,7 +257,7 @@ func svcClientCliHandlersHandlersGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "svc/client/cli/handlers/handlers.gotemplate", size: 885, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "svc/client/cli/handlers/handlers.gotemplate", size: 885, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -277,7 +277,7 @@ func svcClientGrpcClientGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "svc/client/grpc/client.gotemplate", size: 3189, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "svc/client/grpc/client.gotemplate", size: 3189, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -297,7 +297,7 @@ func svcClientHttpClientGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "svc/client/http/client.gotemplate", size: 105, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "svc/client/http/client.gotemplate", size: 105, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -317,7 +317,7 @@ func svcEndpointsGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "svc/endpoints.gotemplate", size: 4272, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "svc/endpoints.gotemplate", size: 4272, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -337,7 +337,7 @@ func svcServerRunGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "svc/server/run.gotemplate", size: 5180, mode: os.FileMode(420), modTime: time.Unix(1551939481, 0)}
+	info := bindataFileInfo{name: "svc/server/run.gotemplate", size: 5180, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -357,7 +357,7 @@ func svcTransport_grpcGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "svc/transport_grpc.gotemplate", size: 3204, mode: os.FileMode(420), modTime: time.Unix(1547365589, 0)}
+	info := bindataFileInfo{name: "svc/transport_grpc.gotemplate", size: 3204, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -377,7 +377,7 @@ func svcTransport_httpGotemplate() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "svc/transport_http.gotemplate", size: 106, mode: os.FileMode(420), modTime: time.Unix(1546092592, 0)}
+	info := bindataFileInfo{name: "svc/transport_http.gotemplate", size: 106, mode: os.FileMode(420), modTime: time.Unix(1464111000, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
