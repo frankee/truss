@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/serenize/snaker"
 	"go/build"
 	"io"
 	"os"
@@ -195,7 +196,8 @@ func parseInput() (*truss.Config, error) {
 	sd.PbPkgName = filepath.Dir(serviceMeta.FilePath)
 	sd.PbPkgName = strings.Replace(sd.PbPkgName, "/", ".", -1)
 	svcName := sd.Service.Name
-	svcName = strings.ToLower(svcName)
+	svcName = snaker.CamelToSnake(svcName)
+	svcName = strings.Replace(svcName, "_", "-", -1)
 
 	svcDirName := svcName + "-service"
 	log.WithField("svcDirName", svcDirName).Debug()
