@@ -20,6 +20,10 @@ import (
 
     "github.com/go-kit/kit/log"
 
+    {{range $i := .ExternalMessageImports}}
+    "{{$i}}"
+    {{- end}}
+
 	// This Service
 	pb "{{.PBImportPath -}}"
 )
@@ -51,7 +55,7 @@ func NewGrpc(conn *grpc.ClientConn, tracer stdopentracing.Tracer, logger log.Log
 						"{{$i.SnakeName}}",
 						EncodeGRPC{{$i.Name}}Request,
 						DecodeGRPC{{$i.Name}}Response,
-						pb.{{GoName $i.ResponseType.Name}}{},
+						{{PackageName $i.ResponseType.Name}}.{{GoName $i.ResponseType.Name}}{},
 						append(clientOptions, grpctransport.ClientBefore(opentracing.ContextToGRPC(tracer, logger)))...,
 					).Endpoint()
 
@@ -73,7 +77,7 @@ func NewGrpc(conn *grpc.ClientConn, tracer stdopentracing.Tracer, logger log.Log
 // DecodeGRPC{{$i.Name}}Response is a transport/grpc.DecodeResponseFunc that converts a
 // gRPC {{ToLower $i.Name}} reply to a user-domain {{ToLower $i.Name}} response. Primarily useful in a client.
 func DecodeGRPC{{$i.Name}}Response(_ context.Context, grpcReply interface{}) (interface{}, error) {
-	reply := grpcReply.(*pb.{{GoName $i.ResponseType.Name}})
+	reply := grpcReply.(*{{PackageName $i.ResponseType.Name}}.{{GoName $i.ResponseType.Name}})
 	return reply, nil
 }
 {{end}}
@@ -83,7 +87,7 @@ func DecodeGRPC{{$i.Name}}Response(_ context.Context, grpcReply interface{}) (in
 // EncodeGRPC{{$i.Name}}Request is a transport/grpc.EncodeRequestFunc that converts a
 // user-domain {{ToLower $i.Name}} request to a gRPC {{ToLower $i.Name}} request. Primarily useful in a client.
 func EncodeGRPC{{$i.Name}}Request(_ context.Context, request interface{}) (interface{}, error) {
-	req := request.(*pb.{{GoName $i.RequestType.Name}})
+	req := request.(*{{PackageName $i.ResponseType.Name}}.{{GoName $i.RequestType.Name}})
 	return req, nil
 }
 {{end}}

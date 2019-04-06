@@ -38,6 +38,9 @@ type Svcdef struct {
 	// go file analyzed.
 	PkgName  string
 	PbPkgName string
+
+	ImportPaths []string
+
 	Messages []*Message
 	Enums    []*Enum
 	// Service contains the sole service for this Svcdef

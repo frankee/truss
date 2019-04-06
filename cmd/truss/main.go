@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"github.com/frankee/truss/gengokit/genutil"
 	"github.com/serenize/snaker"
 	"go/build"
 	"io"
@@ -198,6 +199,23 @@ func parseInput() (*truss.Config, error) {
 	svcName := sd.Service.Name
 	svcName = snaker.CamelToSnake(svcName)
 	svcName = strings.Replace(svcName, "_", "-", -1)
+
+	for _, msg := range serviceMeta.ExternalMessages {
+		segments := strings.Split(msg, ".")
+		length := len(segments)
+		if length > 1 {
+			lastSegment := segments[length-1]
+			genutil.ExternalMessages[lastSegment] = strings.TrimSuffix(msg, "." + lastSegment)
+
+			pkgName := filepath.Dir(serviceMeta.FilePath)
+			pkgPath := strings.TrimSuffix(serviceMeta.PackagePath, pkgName)
+			pkgPath = pkgPath + genutil.ExternalMessages[lastSegment]
+
+			pkgPath = strings.Replace(pkgPath, ".", "/", -1)
+
+			sd.ImportPaths = append(sd.ImportPaths, pkgPath)
+		}
+	}
 
 	svcDirName := svcName + "-service"
 	log.WithField("svcDirName", svcDirName).Debug()

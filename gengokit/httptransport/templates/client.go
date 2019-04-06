@@ -94,6 +94,10 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 	"github.com/pkg/errors"
 
+	{{range $i := .ExternalMessageImports}}
+	"{{$i}}"
+	{{- end}}
+
 	// This Service
 	"{{.ImportPath -}} /svc"
 	pb "{{.PBImportPath -}}"

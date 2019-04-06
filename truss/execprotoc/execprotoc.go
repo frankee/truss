@@ -42,6 +42,8 @@ type ProtoMetaInfo struct {
 	PackageName string
 
 	Imports []string
+
+	ExternalMessages []string
 }
 
 func GetProtoMetaInfo(protofile string) *ProtoMetaInfo {
@@ -51,6 +53,8 @@ func GetProtoMetaInfo(protofile string) *ProtoMetaInfo {
 	parser := proto_parser.NewParser(reader)
 	definition, _ := parser.Parse()
 
+	definedMessage := make(map[string]bool)
+	var rpcMessages []string
 	metaInfo := &ProtoMetaInfo{}
 	proto_parser.Walk(definition, withImport(func(p *proto_parser.Import) {
 		metaInfo.Imports = append(metaInfo.Imports, p.Filename)
@@ -68,7 +72,18 @@ func GetProtoMetaInfo(protofile string) *ProtoMetaInfo {
 		fmt.Println(option)
 	}), withPackage(func(p *proto_parser.Package) {
 		metaInfo.PackagePath = p.Name
+	}), proto_parser.WithMessage(func(message *proto_parser.Message) {
+		definedMessage[message.Name] = true
+	}), proto_parser.WithRPC(func(rpc *proto_parser.RPC) {
+		rpcMessages = append(rpcMessages, rpc.RequestType)
+		rpcMessages = append(rpcMessages, rpc.ReturnsType)
 	}))
+
+	for _, msg := range rpcMessages {
+		if _, ok := definedMessage[msg]; !ok {
+			metaInfo.ExternalMessages = append(metaInfo.ExternalMessages, msg)
+		}
+	}
 
 	return metaInfo
 }

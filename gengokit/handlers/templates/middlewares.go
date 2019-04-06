@@ -9,6 +9,10 @@ import (
 	"github.com/go-kit/kit/tracing/opentracing"
 	stdopentracing "github.com/opentracing/opentracing-go"
 
+	{{range $i := .ExternalMessageImports}}
+	"{{$i}}"
+	{{- end}}
+
 	"{{.ImportPath -}} /svc"
 	pb "{{.PBImportPath -}}"
 )

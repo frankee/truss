@@ -5,6 +5,7 @@ package httptransport
 import (
 	"bytes"
 	"fmt"
+	"github.com/frankee/truss/gengokit/genutil"
 	"github.com/serenize/snaker"
 	"go/format"
 	"strconv"
@@ -421,6 +422,7 @@ var TemplateFuncs = template.FuncMap{
 	"Contains": strings.Contains,
 	"ToLowCamelName": ToLowCamelName,
 	"ToSnake": snaker.CamelToSnake,
+	"PackageName": genutil.GetPackageName,
 }
 
 // ApplyTemplate applies a template with a given name, executor context, and

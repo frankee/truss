@@ -2,6 +2,7 @@ package gengokit
 
 import (
 	"bytes"
+	"github.com/frankee/truss/gengokit/genutil"
 	"github.com/serenize/snaker"
 	"io"
 	"strings"
@@ -22,7 +23,7 @@ type Renderable interface {
 
 type Config struct {
 	GoPackage   string
-	PBGoPackage   string
+	PBGoPackage string
 	Version     string
 	VersionDate string
 
@@ -46,10 +47,11 @@ func ToLowCamelName(s string) string {
 // FuncMap contains a series of utility functions to be passed into
 // templates and used within those templates.
 var FuncMap = template.FuncMap{
-	"ToLower": strings.ToLower,
-	"GoName":  generatego.CamelCase,
+	"ToLower":        strings.ToLower,
+	"GoName":         generatego.CamelCase,
 	"ToLowCamelName": ToLowCamelName,
-	"ToSnake": snaker.CamelToSnake,
+	"ToSnake":        snaker.CamelToSnake,
+	"PackageName":    genutil.GetPackageName,
 }
 
 // Data is passed to templates as the executing struct; its fields
@@ -59,6 +61,9 @@ type Data struct {
 	ImportPath string
 	// import path for .pb.go files containing service structs
 	PBImportPath string
+
+	ExternalMessageImports []string
+
 	// PackageName is the name of the package containing the service definition
 	PackageName string
 	// GRPC/Protobuff service, with all parameters and return values accessible
@@ -74,15 +79,16 @@ type Data struct {
 
 func NewData(sd *svcdef.Svcdef, conf Config) (*Data, error) {
 	return &Data{
-		ImportPath:   conf.GoPackage,
-		PBImportPath: conf.PBGoPackage,
-		PackageName:  sd.PbPkgName,
-		Service:      sd.Service,
-		ClientArgs:   clientarggen.New(sd.Service),
-		HTTPHelper:   httptransport.NewHelper(sd.Service),
-		FuncMap:      FuncMap,
-		Version:      conf.Version,
-		VersionDate:  conf.VersionDate,
+		ImportPath:             conf.GoPackage,
+		PBImportPath:           conf.PBGoPackage,
+		PackageName:            sd.PbPkgName,
+		Service:                sd.Service,
+		ExternalMessageImports: sd.ImportPaths,
+		ClientArgs:             clientarggen.New(sd.Service),
+		HTTPHelper:             httptransport.NewHelper(sd.Service),
+		FuncMap:                FuncMap,
+		Version:                conf.Version,
+		VersionDate:            conf.VersionDate,
 	}, nil
 }
 

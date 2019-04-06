@@ -98,6 +98,10 @@ import (
 	stdopentracing "github.com/opentracing/opentracing-go"
 	httptransport "github.com/go-kit/kit/transport/http"
 
+	{{range $i := .ExternalMessageImports}}
+	"{{$i}}"
+	{{- end}}
+
 	// This service
 	pb "{{.PBImportPath -}}"
 )
