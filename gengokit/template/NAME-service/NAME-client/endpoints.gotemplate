@@ -15,7 +15,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 
 	{{range $i := .ExternalMessageImports}}
-	"{{$i}}"
+	{{$i}}
 	{{- end}}
 
 	pb "{{.PBImportPath -}}"
@@ -42,7 +42,7 @@ type Endpoints struct {
 
 // Endpoints
 {{range $i := .Service.Methods}}
-	func (e Endpoints) {{$i.Name}}(ctx context.Context, in *pb.{{GoName $i.RequestType.Name}}) (*{{PackageName $i.ResponseType.Name}}.{{GoName $i.ResponseType.Name}}, error) {
+	func (e Endpoints) {{$i.Name}}(ctx context.Context, in *{{PackageName $i.RequestType.Name}}.{{GoName $i.RequestType.Name}}) (*{{PackageName $i.ResponseType.Name}}.{{GoName $i.ResponseType.Name}}, error) {
 		response, err := e.{{$i.Name}}Endpoint(ctx, in)
 		if err != nil {
 			return nil, err

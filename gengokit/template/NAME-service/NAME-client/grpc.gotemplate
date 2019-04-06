@@ -21,7 +21,7 @@ import (
     "github.com/go-kit/kit/log"
 
     {{range $i := .ExternalMessageImports}}
-    "{{$i}}"
+    {{$i}}
     {{- end}}
 
 	// This Service
@@ -87,7 +87,7 @@ func DecodeGRPC{{$i.Name}}Response(_ context.Context, grpcReply interface{}) (in
 // EncodeGRPC{{$i.Name}}Request is a transport/grpc.EncodeRequestFunc that converts a
 // user-domain {{ToLower $i.Name}} request to a gRPC {{ToLower $i.Name}} request. Primarily useful in a client.
 func EncodeGRPC{{$i.Name}}Request(_ context.Context, request interface{}) (interface{}, error) {
-	req := request.(*{{PackageName $i.ResponseType.Name}}.{{GoName $i.RequestType.Name}})
+	req := request.(*{{PackageName $i.RequestType.Name}}.{{GoName $i.RequestType.Name}})
 	return req, nil
 }
 {{end}}

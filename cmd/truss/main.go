@@ -29,7 +29,7 @@ import (
 
 var (
 	svcPackageFlag = flag.String("svcout", "", "Go package path where the generated Go service will be written. Trailing slash will create a NAME-service directory")
-	svcPathFlag = flag.String("svcpath", "", "svc path")
+	svcPathFlag    = flag.String("svcpath", "", "svc path")
 	includesFlag   = flag.StringArray("include", []string{}, "The proto files include paths")
 	verboseFlag    = flag.BoolP("verbose", "v", false, "Verbose output")
 	helpFlag       = flag.BoolP("help", "h", false, "Print usage")
@@ -200,21 +200,26 @@ func parseInput() (*truss.Config, error) {
 	svcName = snaker.CamelToSnake(svcName)
 	svcName = strings.Replace(svcName, "_", "-", -1)
 
+	importPaths := make(map[string]bool) // for remove the duplicated path
 	for _, msg := range serviceMeta.ExternalMessages {
 		segments := strings.Split(msg, ".")
 		length := len(segments)
 		if length > 1 {
-			lastSegment := segments[length-1]
-			genutil.ExternalMessages[lastSegment] = strings.TrimSuffix(msg, "." + lastSegment)
+			message := segments[length-1]
+			namespace := strings.TrimSuffix(msg, "."+message)
+			namespace = strings.Replace(namespace, ".", "_", -1)
+			genutil.ExternalMessages[message] = namespace
 
 			pkgName := filepath.Dir(serviceMeta.FilePath)
 			pkgPath := strings.TrimSuffix(serviceMeta.PackagePath, pkgName)
-			pkgPath = pkgPath + genutil.ExternalMessages[lastSegment]
+			pkgPath = namespace + " \"" + pkgPath + strings.Replace(genutil.ExternalMessages[message], "_", "/", -1) + "\""
 
-			pkgPath = strings.Replace(pkgPath, ".", "/", -1)
-
-			sd.ImportPaths = append(sd.ImportPaths, pkgPath)
+			importPaths[pkgPath] = true
 		}
+	}
+
+	for path := range importPaths {
+		sd.ImportPaths = append(sd.ImportPaths, path)
 	}
 
 	svcDirName := svcName + "-service"
@@ -260,7 +265,7 @@ func parseInput() (*truss.Config, error) {
 	//	return nil, errors.New("proto files path not in GOPATH")
 	//}
 
-	cfg.ServicePackage = filepath.Join(cfg.SvcPath, svcName + "-service")
+	cfg.ServicePackage = filepath.Join(cfg.SvcPath, svcName+"-service")
 	cfg.ServicePath = p.Dir
 
 	log.WithField("Service Package", cfg.ServicePackage).Debug()
@@ -398,7 +403,7 @@ func rewritePBGoForContext(serviceName string, pbgoPaths []string) error {
 // service
 func generateCode(cfg *truss.Config, sd *svcdef.Svcdef) (map[string]io.Reader, error) {
 	conf := ggkconf.Config{
-		PBGoPackage:     cfg.PBGoPackage,
+		PBGoPackage:   cfg.PBGoPackage,
 		GoPackage:     cfg.ServicePackage,
 		PreviousFiles: cfg.PrevGen,
 		Version:       Version,

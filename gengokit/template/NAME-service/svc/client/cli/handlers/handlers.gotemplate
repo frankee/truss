@@ -12,8 +12,8 @@ import (
 {{ with $te := .}}
 	{{range $i := $te.Service.Methods}}
 	// {{$i.Name}} implements Service.
-	func {{$i.Name}}({{with index $te.ClientArgs.MethArgs $i.Name}}{{GoName .FunctionArgs}}{{end}}) (*pb.{{GoName $i.RequestType.Name}}, error){
-		request := pb.{{GoName $i.RequestType.Name}}{
+	func {{$i.Name}}({{with index $te.ClientArgs.MethArgs $i.Name}}{{GoName .FunctionArgs}}{{end}}) (*{{PackageName $i.RequestType.Name}}.{{GoName $i.RequestType.Name}}, error){
+		request := {{PackageName $i.RequestType.Name}}.{{GoName $i.RequestType.Name}}{
 		{{- with $meth := index $te.ClientArgs.MethArgs $i.Name -}}
 			{{range $param := $meth.Args -}}
 				{{- if and (and (not $param.IsBaseType) (not $param.Repeated)) (not $param.Enum)}}

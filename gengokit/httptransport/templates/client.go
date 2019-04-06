@@ -10,7 +10,7 @@ var ClientEncodeTemplate = `
 	func EncodeHTTP{{$binding.Label}}Request(_ context.Context, r *http.Request, request interface{}) error {
 		strval := ""
 		_ = strval
-		req := request.(*pb.{{GoName $binding.Parent.RequestType}})
+		req := request.(*{{PackageName $binding.Parent.RequestType}}.{{GoName $binding.Parent.RequestType}})
 		_ = req
 
 		r.Header.Set("transport", "HTTPJSON")
@@ -52,7 +52,7 @@ var ClientEncodeTemplate = `
 
 		// Set the body parameters
 		var buf bytes.Buffer
-		toRet := request.(*pb.{{GoName $binding.Parent.RequestType}})
+		toRet := request.(*{{PackageName $binding.Parent.RequestType}}.{{GoName $binding.Parent.RequestType}})
 		{{- range $field := $binding.Fields -}}
 			{{if eq $field.Location "body"}}
 				{{/* Only set the fields which should be in the body, so all
@@ -95,7 +95,7 @@ import (
 	"github.com/pkg/errors"
 
 	{{range $i := .ExternalMessageImports}}
-	"{{$i}}"
+	{{$i}}
 	{{- end}}
 
 	// This Service
@@ -228,7 +228,7 @@ func contextValuesToHttpHeaders(keys []string) httptransport.RequestFunc {
 			return nil, errors.Wrapf(errorDecoder(buf), "status code: '%d'", r.StatusCode)
 		}
 
-		var resp pb.{{GoName $method.ResponseType}}
+		var resp {{PackageName $method.ResponseType}}.{{GoName $method.ResponseType}}
 		if err = json.Unmarshal(buf, &resp); err != nil {
 			return nil, errorDecoder(buf)
 		}

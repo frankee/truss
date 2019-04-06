@@ -20,7 +20,7 @@ import (
     "github.com/go-kit/kit/tracing/opentracing"
 
     {{range $i := .ExternalMessageImports}}
-    "{{$i}}"
+    {{$i}}
     {{- end}}
 
 	// This Service

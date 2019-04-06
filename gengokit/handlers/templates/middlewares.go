@@ -10,7 +10,7 @@ import (
 	stdopentracing "github.com/opentracing/opentracing-go"
 
 	{{range $i := .ExternalMessageImports}}
-	"{{$i}}"
+	{{$i}}
 	{{- end}}
 
 	"{{.ImportPath -}} /svc"

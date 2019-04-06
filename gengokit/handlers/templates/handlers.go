@@ -25,7 +25,7 @@ import (
 	"errors"
 	
 	{{range $i := .ExternalMessageImports}}
-	"{{$i}}"
+	{{$i}}
 	{{- end}}
 	pb "{{.PBImportPath -}}"
 )

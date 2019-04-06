@@ -97,7 +97,7 @@ func NewBinding(i int, meth *svcdef.ServiceMethod) *Binding {
 		if field.Type.Message == nil && field.Type.Enum == nil && field.Type.Map == nil {
 			newField.IsBaseType = true
 		} else {
-			newField.GoType = "pb." + newField.GoType
+			newField.GoType = genutil.GetPackageName(newField.GoType) + "." + newField.GoType
 		}
 
 		// Modify GoType to reflect pointer or repeated status

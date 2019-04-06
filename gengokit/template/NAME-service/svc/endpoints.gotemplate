@@ -17,7 +17,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 
 	{{range $i := .ExternalMessageImports}}
-    "{{$i}}"
+    {{$i}}
     {{- end}}
 
 	pb "{{.PBImportPath -}}"

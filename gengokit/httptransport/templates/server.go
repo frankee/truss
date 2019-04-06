@@ -8,7 +8,7 @@ var ServerDecodeTemplate = `
 	// decodes a JSON-encoded {{ToLower $binding.Parent.Name}} request from the HTTP request
 	// body. Primarily useful in a server.
 	func DecodeHTTP{{$binding.Label}}Request(_ context.Context, r *http.Request) (interface{}, error) {
-		var req pb.{{GoName $binding.Parent.RequestType}}
+		var req {{PackageName $binding.Parent.RequestType}}.{{GoName $binding.Parent.RequestType}}
 
 		// to support gzip input
 		var reader io.ReadCloser
@@ -99,7 +99,7 @@ import (
 	httptransport "github.com/go-kit/kit/transport/http"
 
 	{{range $i := .ExternalMessageImports}}
-	"{{$i}}"
+	{{$i}}
 	{{- end}}
 
 	// This service
