@@ -16,6 +16,9 @@ import (
     netip "github.com/toolkits/net"
     "google.golang.org/grpc"
 
+    "git.aimap.io/go/wayz-kit/utils/network"
+    _ "go.uber.org/automaxprocs"
+
     "git.aimap.io/go/logs"
     wzclient "git.aimap.io/go/wayz-kit/client"
     "git.aimap.io/go/wayz-kit/log/zap"
@@ -103,7 +106,7 @@ func Run(cfg wzserver.Config) {
     sdClient := sd.New(sd.NewConfig("sd"), logger)
 
     if sdClient != nil {
-        url := "etcd://"+ getHost() + ":" + getGrpcPort(cfg.GrpcAddr)
+        url := "etcd://"+ network.GetHost() + ":" + getGrpcPort(cfg.GrpcAddr)
         sdClient.Register(url, FullServiceName, []string{})
         defer sdClient.Deregister()
     }
@@ -164,14 +167,6 @@ func Run(cfg wzserver.Config) {
 	// Run!
 	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", " started.")
 	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", <-errc)
-}
-
-func getHost() string {
-    ips, err := netip.IntranetIP()
-    if err != nil || len(ips) == 0 {
-        panic(err)
-    }
-    return ips[0]
 }
 
 func getGrpcPort(addr string) string {

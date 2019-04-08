@@ -89,6 +89,7 @@ import (
 
 	"context"
 
+    "github.com/rs/cors"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"github.com/json-iterator/go"
@@ -142,7 +143,7 @@ func MakeHTTPHandler(endpoints Endpoints, tracer stdopentracing.Tracer, logger l
 			))
 		{{- end}}
 	{{- end}}
-	return m
+    return cors.AllowAll().Handler(m)
 }
 
 // ErrorEncoder writes the error to the ResponseWriter, by default a content
