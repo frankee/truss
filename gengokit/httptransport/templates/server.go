@@ -56,9 +56,6 @@ var ServerDecodeTemplate = `
 				{{$field.GenQueryUnmarshaler}}
 			{{end}}
 		{{end}}
-		if err = req.(genutil.WithValidate).Validate(); err != nil {
-			return nil, err
-		}
 		return &req, err
 	}
 {{- end -}}
@@ -209,10 +206,7 @@ func (h httpError) Headers() http.Header {
 func EncodeHTTPGenericResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	encoder := jsoniter.ConfigFastest.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
-	if err := encoder.Encode(response); err != nil {
-		return err
-	}
-	return response.(genutil.WithValidate).Validate()
+	return encoder.Encode(response)
 }
 
 // Helper functions

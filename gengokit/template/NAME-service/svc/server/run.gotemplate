@@ -26,6 +26,7 @@ import (
     "git.aimap.io/go/wayz-kit/sd"
     wzserver "git.aimap.io/go/wayz-kit/server"
     "git.aimap.io/go/wayz-kit/tracing"
+    "git.aimap.io/go/wayz-kit/middleware"
 
     kitprometheus "github.com/go-kit/kit/metrics/prometheus"
     stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -96,11 +97,14 @@ func Run(cfg wzserver.Config) {
         Help:      "Total duration of requests in seconds.",
     }, fieldKeys)
 
+    validator := middleware.NewValidator()
+
     endpoints := NewEndpoints(map[string]interface{}{
          "tracer": tracer,
          "logger": logger,
          "count": count,
          "latency": latency,
+         "validator": validator,
      })
 
     sdClient := sd.New(sd.NewConfig("sd"), logger)
@@ -182,7 +186,7 @@ func unaryServerFilter(
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (resp interface{}, err error) {
-	if err := req.(genutil.WithValidate).Validate(); err != nil {
+	if err := middleware.Validate(req); err != nil {
 		return nil, err
 	}
 
@@ -196,7 +200,7 @@ func unaryServerFilter(
 	if err != nil {
 		return resp, err
 	}
-	if err = resp.(genutil.WithValidate).Validate(); err != nil {
+	if err = middleware.Validate(resp); err != nil {
 		return nil, err
 	}
 	return

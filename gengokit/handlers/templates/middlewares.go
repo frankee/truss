@@ -52,6 +52,10 @@ func WrapEndpoints(in svc.Endpoints, options map[string]interface{}) svc.Endpoin
 	if value, ok := options["latency"]; ok && value != nil {
 		latency = value.(*kitprometheus.Histogram)
 	}
+	var validator *middleware.Validator
+	if value, ok := options["validator"]; ok && value != nil {
+		validator = value.(*middleware.Validator)
+	}
 
 	{{range $i := .Service.Methods}}
 	{ // {{$i.Name}}
@@ -60,6 +64,9 @@ func WrapEndpoints(in svc.Endpoints, options map[string]interface{}) svc.Endpoin
  		}
 		if count != nil && latency != nil {
 			in.{{$i.Name}}Endpoint = middleware.Instrumenting(latency.With("method", "{{$i.SnakeName}}"), count.With("method", "{{$i.SnakeName}}"))(in.{{$i.Name}}Endpoint)
+		}
+		if validator != nil {
+			in.{{$i.Name}}Endpoint = validator.Validate()(in.{{$i.Name}}Endpoint)
 		}
 	}
 	{{- end}}
