@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/frankee/truss/gengokit/genutil"
-	"github.com/serenize/snaker"
 	"go/build"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/frankee/truss/gengokit/genutil"
+	"github.com/serenize/snaker"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -54,7 +55,6 @@ func init() {
 		panic(err)
 	}
 	workplace = filepath.Dir(ex)
-	fmt.Println(workplace)
 
 	// If Version or VersionDate are not set, truss was not built with make
 	if Version == "" || VersionDate == "" {

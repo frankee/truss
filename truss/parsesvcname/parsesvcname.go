@@ -86,7 +86,7 @@ func FromPaths(includePaths []string, protoRawPaths []string, protoDefPaths []st
 	for _, meta := range metaInfos {
 		base := filepath.Base(meta.FilePath)
 		bareName := strings.TrimSuffix(base, filepath.Ext(meta.FilePath))
-		pbgo := filepath.Join(td, meta.PackagePath, bareName+ ".pb.go")
+		pbgo := filepath.Join(td, meta.PackagePath, bareName+".pb.go")
 		pbgoPaths = append(pbgoPaths, pbgo)
 
 		protofile := filepath.Join(meta.IncludePath, meta.FilePath)
