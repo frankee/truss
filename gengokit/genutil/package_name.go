@@ -2,7 +2,7 @@ package genutil
 
 var ExternalMessages map[string]string
 
-func init()  {
+func init() {
 	ExternalMessages = make(map[string]string)
 }
 

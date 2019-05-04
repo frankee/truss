@@ -177,16 +177,12 @@ func getGrpcPort(addr string) string {
     return host[1]
 }
 
-type withValidate interface {
-	Validate() error
-}
-
 func unaryServerFilter(
 	ctx context.Context, req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (resp interface{}, err error) {
-	if err := req.(withValidate).Validate(); err != nil {
+	if err := req.(genutil.WithValidate).Validate(); err != nil {
 		return nil, err
 	}
 
@@ -200,7 +196,7 @@ func unaryServerFilter(
 	if err != nil {
 		return resp, err
 	}
-	if err = resp.(withValidate).Validate(); err != nil {
+	if err = resp.(genutil.WithValidate).Validate(); err != nil {
 		return nil, err
 	}
 	return
