@@ -187,6 +187,7 @@ func unaryServerFilter(
 	handler grpc.UnaryHandler,
 ) (resp interface{}, err error) {
 	if err := middleware.Validate(req); err != nil {
+		logs.Errorf("validate request failed, err: %s", err)
 		return nil, err
 	}
 
@@ -201,6 +202,7 @@ func unaryServerFilter(
 		return resp, err
 	}
 	if err = middleware.Validate(resp); err != nil {
+		logs.Errorf("validate request failed, err: %s", err)
 		return nil, err
 	}
 	return
