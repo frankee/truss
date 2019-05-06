@@ -55,6 +55,7 @@ func init() {
 		panic(err)
 	}
 	workplace = filepath.Dir(ex)
+	fmt.Println(workplace)
 
 	// If Version or VersionDate are not set, truss was not built with make
 	if Version == "" || VersionDate == "" {
