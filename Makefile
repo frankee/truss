@@ -12,6 +12,7 @@ dependencies:
 	go get -u github.com/golang/protobuf/protoc-gen-go
 	go get -u github.com/golang/protobuf/proto
 	go get -u github.com/jteeuwen/go-bindata/...
+	go get -u github.com/mwitkow/go-proto-validators/protoc-gen-govalidators
 
 # Generate go files containing the all template files in []byte form
 gobindata:

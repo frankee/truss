@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
 	proto_parser "github.com/emicklei/proto"
+	"github.com/golang/protobuf/proto"
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	"github.com/pkg/errors"
 )
@@ -34,8 +34,8 @@ func withPackage(apply func(p *proto_parser.Package)) proto_parser.Handler {
 
 type ProtoMetaInfo struct {
 	IncludePath string
-	FilePath string
-	FileName string
+	FilePath    string
+	FileName    string
 
 	// go options in proto file
 	PackagePath string
@@ -68,7 +68,7 @@ func GetProtoMetaInfo(protofile string) *ProtoMetaInfo {
 			} else if len(packages) == 1 {
 				metaInfo.PackagePath = packages[0]
 			}
- 		}
+		}
 		fmt.Println(option)
 	}), withPackage(func(p *proto_parser.Package) {
 		metaInfo.PackagePath = p.Name
@@ -106,7 +106,7 @@ func GetProtoImports(protofile string) []string {
 	return importFiles
 }
 
-// GeneratePBDotGo creates .pb.go files from the passed protoPaths and writes
+// GeneratePBDotGo creates .pb.go and .validator.pb.go files from the passed protoPaths and writes
 // them to outDir.
 func GeneratePBDotGo(protoPaths, gopath []string, outDir string) error {
 	if len(outDir) == 0 {
@@ -122,7 +122,14 @@ func GeneratePBDotGo(protoPaths, gopath []string, outDir string) error {
 		return errors.Wrap(err, "cannot find protoc-gen-go in PATH")
 	}
 
-	err = protoc(protoPaths, gopath, genGoCode)
+	_, err = exec.LookPath("protoc-gen-govalidators")
+	if err != nil {
+		return errors.Wrap(err, "cannot find protoc-gen-govalidators in PATH")
+	}
+
+	genValidatorCode := "--govalidators_out=" + outDir
+
+	err = protoc(protoPaths, gopath, []string{genGoCode, genValidatorCode})
 	if err != nil {
 		return errors.Wrap(err, "cannot exec protoc with protoc-gen-go")
 	}
@@ -166,7 +173,7 @@ func getProtocOutput(protoPaths, gopath []string) ([]byte, error) {
 
 	pluginCall := "--truss-protocast_out=" + protocOutDir
 
-	err = protoc(protoPaths, gopath, pluginCall)
+	err = protoc(protoPaths, gopath, []string{pluginCall})
 	if err != nil {
 		return nil, errors.Wrap(err, "protoc failed")
 	}
@@ -192,7 +199,7 @@ func getProtocOutput(protoPaths, gopath []string) ([]byte, error) {
 }
 
 // protoc executes protoc on protoPaths
-func protoc(protoPaths, gopath []string, plugin string) error {
+func protoc(protoPaths, gopath []string, plugins []string) error {
 	var cmdArgs []string
 
 	cmdArgs = append(cmdArgs, "--proto_path="+filepath.Dir(protoPaths[0]))
@@ -202,7 +209,7 @@ func protoc(protoPaths, gopath []string, plugin string) error {
 		cmdArgs = append(cmdArgs, "-I"+gp)
 	}
 
-	cmdArgs = append(cmdArgs, plugin)
+	cmdArgs = append(cmdArgs, plugins...)
 	// Append each definition file path to the end of that command args
 	cmdArgs = append(cmdArgs, protoPaths...)
 
