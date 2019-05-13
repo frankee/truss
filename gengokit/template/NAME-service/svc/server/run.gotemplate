@@ -28,6 +28,7 @@ import (
     "git.aimap.io/go/wayz-kit/tracing"
     "git.aimap.io/go/wayz-kit/middleware"
     "git.aimap.io/location/genproto/location-apis/mojo/core"
+	"git.aimap.io/go/config"
 
     kitprometheus "github.com/go-kit/kit/metrics/prometheus"
     stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -203,13 +204,14 @@ func unaryServerFilter(
 		return resp, err
 	}
 
-    var isRelease bool
-    err := config.ScanKey("is_release", &isRelease)
-	if err == nil && !isRelease {
-        if err1 := middleware.Validate(resp); err1 != nil {
-		    logs.Errorf("validate request failed, err: %s", err1)
-		    return nil, core.NewError(http.StatusInternalServerError, err1.Error())
-        }
+	var validatorCfg middleware.ValidatorConfig
+	_ = config.ScanKey("validator", &validatorCfg)
+	if validatorCfg.IgnoreResponse {
+		return
+	}
+	if err = middleware.Validate(resp); err != nil {
+		logs.Errorf("validate response failed, err: %s", err)
+		return nil, core.NewError(http.StatusInternalServerError, err.Error())
 	}
 	return
 }
