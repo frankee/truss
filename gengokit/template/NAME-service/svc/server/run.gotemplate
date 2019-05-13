@@ -206,7 +206,7 @@ func unaryServerFilter(
 
 	var validatorCfg middleware.ValidatorConfig
 	_ = config.ScanKey("validator", &validatorCfg)
-	if validatorCfg.IgnoreResponse {
+	if !validatorCfg.CheckResponse {
 		return
 	}
 	if err = middleware.Validate(resp); err != nil {
