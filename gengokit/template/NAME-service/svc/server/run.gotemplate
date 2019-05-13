@@ -28,7 +28,7 @@ import (
     "git.aimap.io/go/wayz-kit/tracing"
     "git.aimap.io/go/wayz-kit/middleware"
     "git.aimap.io/location/genproto/location-apis/mojo/core"
-	"git.aimap.io/go/config"
+    "git.aimap.io/go/config"
 
     kitprometheus "github.com/go-kit/kit/metrics/prometheus"
     stdprometheus "github.com/prometheus/client_golang/prometheus"
