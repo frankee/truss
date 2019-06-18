@@ -174,6 +174,13 @@ func ParseService(lex *SvcLexer) (*Service, error) {
 		}
 	}
 
+	// service in the filed define
+	if tk == IDENT && val == "service" && lex.GetPosition() > 0 {
+		return nil, io.ErrUnexpectedEOF
+	}
+	//pos := lex.GetPosition()
+	//print(pos)
+
 	toret := &Service{}
 
 	tk, val = lex.GetTokenIgnoreWhitespace()
