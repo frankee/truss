@@ -26,6 +26,9 @@ import (
     "git.aimap.io/go/wayz-kit/sd"
     wzserver "git.aimap.io/go/wayz-kit/server"
     "git.aimap.io/go/wayz-kit/tracing"
+    "git.aimap.io/go/wayz-kit/middleware"
+    "git.aimap.io/location/genproto/location-apis/mojo/core"
+    "git.aimap.io/go/config"
 
     kitprometheus "github.com/go-kit/kit/metrics/prometheus"
     stdprometheus "github.com/prometheus/client_golang/prometheus"
@@ -96,11 +99,14 @@ func Run(cfg wzserver.Config) {
         Help:      "Total duration of requests in seconds.",
     }, fieldKeys)
 
+    validator := middleware.NewValidator()
+
     endpoints := NewEndpoints(map[string]interface{}{
          "tracer": tracer,
          "logger": logger,
          "count": count,
          "latency": latency,
+         "validator": validator,
      })
 
     sdClient := sd.New(sd.NewConfig("sd"), logger)
@@ -158,7 +164,7 @@ func Run(cfg wzserver.Config) {
 		}
 
 		srv := svc.MakeGRPCServer(endpoints, tracer, logger)
-		s := grpc.NewServer()
+		s := grpc.NewServer(grpc.UnaryInterceptor(unaryServerFilter))
 		pb.Register{{.Service.Name}}Server(s, srv)
 
 		errc <- s.Serve(ln)
@@ -175,4 +181,37 @@ func getGrpcPort(addr string) string {
         panic("host name is invalid (" + addr + ")")
     }
     return host[1]
+}
+
+func unaryServerFilter(
+	ctx context.Context, req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (resp interface{}, err error) {
+	if err := middleware.Validate(req); err != nil {
+		logs.Errorf("validate request failed, err: %s", err)
+		return nil, core.NewError(http.StatusBadRequest, err.Error())
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic: %v", r)
+		}
+	}()
+
+	resp, err = handler(ctx, req)
+	if err != nil {
+		return resp, err
+	}
+
+	var validatorCfg middleware.ValidatorConfig
+	_ = config.ScanKey("validator", &validatorCfg)
+	if !validatorCfg.CheckResponse {
+		return
+	}
+	if err = middleware.Validate(resp); err != nil {
+		logs.Errorf("validate response failed, err: %s", err)
+		return nil, core.NewError(http.StatusInternalServerError, err.Error())
+	}
+	return
 }
