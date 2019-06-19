@@ -37,7 +37,11 @@ func isEOF(err error) bool {
 // that that binding requires, where that parameter should be located, and the
 // type of each parameter.
 func consolidateHTTP(sd *Svcdef, protoFiles map[string]io.Reader) error {
-	for _, pfile := range protoFiles {
+	for name, pfile := range protoFiles {
+		if !strings.HasSuffix(name, "service.proto") {
+			continue
+		}
+
 		lex := svcparse.NewSvcLexer(pfile)
 		protosvc, err := svcparse.ParseService(lex)
 		if err != nil {
