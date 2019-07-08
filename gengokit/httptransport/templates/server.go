@@ -12,9 +12,10 @@ var ServerDecodeTemplate = `
 
 		// to support gzip input
 		var reader io.ReadCloser
+		var err error 
 		switch r.Header.Get("Content-Encoding") {
 		case "gzip":
-			reader, err := gzip.NewReader(r.Body)
+			reader, err = gzip.NewReader(r.Body)
 			defer reader.Close()
 			if err != nil {
 				return nil, core.Wrap(err, 400, "failed to read the gzip content")
