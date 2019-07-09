@@ -22,7 +22,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
 	
 	{{range $i := .ExternalMessageImports}}
 	{{$i}}
