@@ -44,6 +44,10 @@ func NewGrpc(conn *grpc.ClientConn, tracer stdopentracing.Tracer, logger log.Log
 		grpctransport.ClientBefore(
 			contextValuesToGRPCMetadata(cc.headers)),
 	}
+	if tracer != nil {
+      clientOptions = append(clientOptions, grpctransport.ClientBefore(opentracing.ContextToGRPC(tracer, logger)))
+    }
+
 	{{- with $te := .}}
 		{{- with $pkgName := $te.PackageName}}
 			{{- range $i := $te.Service.Methods}}
@@ -56,10 +60,12 @@ func NewGrpc(conn *grpc.ClientConn, tracer stdopentracing.Tracer, logger log.Log
 						EncodeGRPC{{$i.Name}}Request,
 						DecodeGRPC{{$i.Name}}Response,
 						{{PackageName $i.ResponseType.Name}}.{{GoName $i.ResponseType.Name}}{},
-						append(clientOptions, grpctransport.ClientBefore(opentracing.ContextToGRPC(tracer, logger)))...,
+						clientOptions...,
 					).Endpoint()
 
-					{{ToLower $i.Name}}Endpoint = opentracing.TraceClient(tracer, "{{$i.SnakeName}}")({{ToLower $i.Name}}Endpoint)
+                    if tracer != nil {
+					    {{ToLower $i.Name}}Endpoint = opentracing.TraceClient(tracer, "{{$i.SnakeName}}")({{ToLower $i.Name}}Endpoint)
+					}
 				}
 			{{end}}
 		{{end}}

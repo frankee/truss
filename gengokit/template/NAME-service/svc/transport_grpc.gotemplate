@@ -33,6 +33,14 @@ func MakeGRPCServer(endpoints Endpoints, tracer stdopentracing.Tracer, logger lo
 		 grpctransport.ServerBefore(metadataToContext),
 		 grpctransport.ServerErrorLogger(logger),
 	}
+
+	addTracerOption := func(methodName string) []grpctransport.ServerOption {
+	    if tracer != nil {
+	        return append(serverOptions, grpctransport.ServerBefore(opentracing.GRPCToContext(tracer, methodName, logger)))
+	    }
+	    return serverOptions
+	}
+
 	return &grpcServer{
 	// {{ ToLower .Service.Name }}
 	{{range $i := .Service.Methods}}
@@ -40,7 +48,8 @@ func MakeGRPCServer(endpoints Endpoints, tracer stdopentracing.Tracer, logger lo
 			endpoints.{{$i.Name}}Endpoint,
 			DecodeGRPC{{$i.Name}}Request,
 			EncodeGRPC{{$i.Name}}Response,
-			append(serverOptions, grpctransport.ServerBefore(opentracing.GRPCToContext(tracer, "{{$i.SnakeName}}", logger)))...,
+			addTracerOption("{{$i.SnakeName}}")...,
+			//append(serverOptions, grpctransport.ServerBefore(opentracing.GRPCToContext(tracer, "{{$i.SnakeName}}", logger)))...,
 		),
 	{{- end}}
 	}

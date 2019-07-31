@@ -133,6 +133,13 @@ func MakeHTTPHandler(endpoints Endpoints, tracer stdopentracing.Tracer, logger l
 		}
 	{{- end }}
 	m := mux.NewRouter()
+	
+	addTracerOption := func(methodName string) []httptransport.ServerOption {
+	    if tracer != nil {
+	        return append(serverOptions, httptransport.ServerBefore(opentracing.GRPCToContext(tracer, methodName, logger)))
+	    }
+	    return serverOptions
+	}
 
 	{{range $method := .HTTPHelper.Methods}}
 		{{range $binding := $method.Bindings}}
@@ -140,7 +147,8 @@ func MakeHTTPHandler(endpoints Endpoints, tracer stdopentracing.Tracer, logger l
 				endpoints.{{$method.Name}}Endpoint,
 				DecodeHTTP{{$binding.Label}}Request,
 				EncodeHTTPGenericResponse,
-				append(serverOptions, httptransport.ServerBefore(opentracing.HTTPToContext(tracer, "{{$method.SnakeName}}", logger)))...,
+				addTracerOption("{{$method.SnakeName}}")...,
+				//append(serverOptions, httptransport.ServerBefore(opentracing.HTTPToContext(tracer, "{{$method.SnakeName}}", logger)))...,
 			))
 		{{- end}}
 	{{- end}}

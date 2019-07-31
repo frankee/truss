@@ -23,6 +23,7 @@ import (
     "git.aimap.io/go/logs"
     wzclient "git.aimap.io/go/wayz-kit/client"
     "git.aimap.io/go/wayz-kit/log/zap"
+    "git.aimap.io/go/wayz-kit/log/level"
     "git.aimap.io/go/wayz-kit/metrics"
     "git.aimap.io/go/wayz-kit/sd"
     wzserver "git.aimap.io/go/wayz-kit/server"
@@ -84,18 +85,18 @@ func Run(cfg wzserver.Config) {
     // Create a single logger, which we'll use and give to other components.
     logger := zap.Logger()
 
-    config := metrics.NewConfig("metrics")
+    metricsConfig := metrics.NewConfig("metrics")
     fieldKeys := []string{"method", "access_key", "error"}
     count := kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
-        Namespace: config.Department,
-        Subsystem: config.Project,
+        Namespace: metricsConfig.Department,
+        Subsystem: metricsConfig.Project,
         Name:      "request_count",
         Help:      "Number of requests received.",
     }, fieldKeys)
 
     latency := kitprometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
-        Namespace: config.Department,
-        Subsystem: config.Project,
+        Namespace: metricsConfig.Department,
+        Subsystem: metricsConfig.Project,
         Name:      "request_latency_seconds",
         Help:      "Total duration of requests in seconds.",
     }, fieldKeys)
@@ -110,11 +111,15 @@ func Run(cfg wzserver.Config) {
          "validator": validator,
      })
 
-    sdClient := sd.New(sd.NewConfig("sd"), logger)
+    sdConfig := sd.NewConfig("sd")
+    sdClient := sd.New(sdConfig, logger)
 
     if sdClient != nil {
         url := "etcd://"+ network.GetHost() + ":" + getGrpcPort(cfg.GrpcAddr)
-        sdClient.Register(url, FullServiceName, []string{})
+        err := sdClient.Register(url, FullServiceName, []string{})
+        if err != nil {
+            panic(err)
+        }
         defer sdClient.Deregister()
     }
 
@@ -171,9 +176,16 @@ func Run(cfg wzserver.Config) {
 		errc <- s.Serve(ln)
 	}()
 
+	if watchObj, err := config.WatchFunc(level.ChangeLogLevel, level.LevelPath); err == nil {
+        defer func() { _ = watchObj.Close() }()
+    } else {
+        panic(err.Error())
+    }
+
 	// Run!
 	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", " started.")
 	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", <-errc)
+	logs.Info("{{.PackageName}}.{{.Service.Name}}Server", " closed.")
 }
 
 func getGrpcPort(addr string) string {
