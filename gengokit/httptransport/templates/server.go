@@ -136,7 +136,7 @@ func MakeHTTPHandler(endpoints Endpoints, tracer stdopentracing.Tracer, logger l
 	
 	addTracerOption := func(methodName string) []httptransport.ServerOption {
 	    if tracer != nil {
-	        return append(serverOptions, httptransport.ServerBefore(opentracing.GRPCToContext(tracer, methodName, logger)))
+	        return append(serverOptions, httptransport.ServerBefore(opentracing.HTTPToContext(tracer, methodName, logger)))
 	    }
 	    return serverOptions
 	}
