@@ -96,7 +96,7 @@ func (client *Client) factory(makeEndpoint func(server pb.{{.Service.Name}}Serve
 			if err != nil {
 				return nil, nil, err
 			}
-			grpc, err := NewGrpc(transport, tracer, logger, CtxValuesToSend(""))
+			grpc, err := NewGrpc(transport, tracer, logger, CtxValuesToSend("access_key"))
 			if err != nil {
                 return nil, nil, err
             }
